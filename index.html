@@ -651,7 +651,7 @@ function executeLogin() {
 }
 function logout() { localStorage.removeItem('neo_role'); window.location.reload(); }
 function applyPermissions() {
-    const roleTxt = {admin:'المدير', cashier:'الكاشير', waiter:'الويتر', barista:'المطبخ'};
+    const roleTxt = {admin:'الحج صاحب الكافيه', cashier:'الكاشير', waiter:'الويتر', barista:'المطبخ'};
     document.getElementById('currentUserLabel').innerHTML = `<i class="fas fa-user"></i> ${roleTxt[currentRole]}`;
     if (currentRole === 'cashier') ['nav_dashboard','nav_inventory','nav_recipes','nav_expenses','nav_reports','nav_finance','nav_staff','nav_loyalty','nav_menu_edit'].forEach(id => {if(document.getElementById(id)) document.getElementById(id).style.display = 'none';});
     if (currentRole === 'waiter') { document.querySelectorAll('.nav-btn').forEach(b => b.style.display='none'); document.getElementById('nav_pos').style.display='flex'; document.getElementById('cashierActions').style.display='none'; document.getElementById('waiterActions').style.display='block'; }
