@@ -1264,32 +1264,73 @@ function saveStaffAction(){ const id=document.getElementById('staff_action_id').
 
 function openCloseShiftModal(){ const s = DB.getData(DB.keys.sales); const e = DB.getData(DB.keys.exp); const targetDate = getBusinessDate(new Date()); const ts = s.filter(x => getBusinessDate(x.date) === targetDate); const te = e.filter(x => getBusinessDate(x.date) === targetDate).reduce((a,b)=>a+b.amount,0); const cs=ts.filter(x=>x.method==='cash').reduce((a,b)=>a+b.total,0),vs=ts.filter(x=>x.method==='vodafone').reduce((a,b)=>a+b.total,0),is=ts.filter(x=>x.method==='insta').reduce((a,b)=>a+b.total,0),vis=ts.filter(x=>x.method==='visa').reduce((a,b)=>a+b.total,0); const debtIncomes = ts.filter(x=>x.type==='debt_payment').reduce((a,b)=>a+b.total,0); const html=`<div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>مبيعات كاش (أوردرات):</span><b>${cs - debtIncomes} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;color:var(--success);"><span>تسديد ديون (كاش):</span><b>+ ${debtIncomes} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>فودافون كاش:</span><b>${vs} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>انستا باي:</span><b>${is} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>فيزا:</span><b>${vis} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:2px solid #000;padding:10px 0;font-size:18px;"><span>الإجمالي العام:</span><b>${(cs+vs+is+vis).toFixed(2)} ج</b></div><div style="display:flex;justify-content:space-between;color:red;padding:5px;"><span>مصروفات مسحوبة (من الدرج):</span><b>- ${te} ج</b></div><div style="background:#f0fdf4;padding:10px;text-align:center;border:1px solid green;margin-top:10px;font-weight:bold;font-size:20px;color:var(--primary-dark);">الصافي النقدي بالدرج: ${(cs-te).toFixed(2)} ج</div>`; document.getElementById('shift_report_body').innerHTML=html;openModal('modal_close_shift'); }
 function printShiftReport(){window.print();}
-/* ================== الموتور الشامل لصفحة الخزنة والموردين ================== */
+/* ================== الموتور الشامل لصفحة الخزنة والموردين (النسخة الاحترافية) ================== */
 
-function renderFinance() {
-    // 1. حساب وعرض رصيد الخزنة الرئيسي
-    let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
-    let balance = vault.reduce((sum, tx) => tx.type === 'in' ? sum + parseFloat(tx.amount) : sum - parseFloat(tx.amount), 0);
+// 1. حقن الشاشات المنبثقة الشيك (عشان منعدلش في الـ HTML فوق)
+(function injectFinanceModals() {
+    if(document.getElementById('modal_custom_vault')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+    <div id="modal_custom_vault" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 id="cv_title" style="color:var(--primary); margin-bottom:15px;">الخزنة</h3><input type="hidden" id="cv_type"><label style="font-size:12px; font-weight:bold;">المبلغ:</label><input type="number" id="cv_amount" class="form-control" placeholder="أدخل المبلغ هنا..."><label style="font-size:12px; font-weight:bold;">البيان / الملاحظات:</label><input type="text" id="cv_note" class="form-control" placeholder="سبب الإيداع أو السحب..."><button class="btn-action" onclick="confirmVaultTx()" style="width:100%"><i class="fas fa-check"></i> تأكيد العملية</button></div></div>
     
-    // البحث عن مكان الرقم الكبير وتحديثه
-    document.querySelectorAll('h2').forEach(h2 => {
-        if(h2.innerText.includes('ج') || h2.innerText.includes('0.00')) {
-            h2.innerText = balance.toFixed(2) + ' ج';
+    <div id="modal_custom_supplier" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--primary); margin-bottom:15px;"><i class="fas fa-truck"></i> إضافة مورد جديد</h3><input type="text" id="cs_name" class="form-control" placeholder="اسم المورد (ضروري)..."><input type="text" id="cs_phone" class="form-control" placeholder="رقم التليفون..."><input type="text" id="cs_supplies" class="form-control" placeholder="بيورد إيه؟..."><button class="btn-action" onclick="confirmAddSupplier()" style="width:100%"><i class="fas fa-save"></i> حفظ المورد</button></div></div>
+
+    <div id="modal_vault_pin" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:#e74c3c; margin-bottom:10px;"><i class="fas fa-lock"></i> الخزنة محمية</h3><p style="text-align:center; font-size:13px; margin-bottom:15px; color:#555;">برجاء إدخال الرقم السري للمدير لعرض الرصيد</p><input type="password" id="vault_pin_input" class="form-control" placeholder="****" style="text-align:center; font-size:30px; letter-spacing:15px;"><button class="btn-action" onclick="verifyVaultPin()" style="width:100%; background:#e74c3c;"><i class="fas fa-unlock"></i> فتح الخزنة</button></div></div>
+    `);
+})();
+
+// 2. الموتور الأساسي
+function renderFinance() {
+    let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
+    window.currentVaultBalance = vault.reduce((sum, tx) => tx.type === 'in' ? sum + parseFloat(tx.amount) : sum - parseFloat(tx.amount), 0);
+    
+    // تنظيف الأرقام الغلط وتحديد الخزنة الحقيقية
+    document.querySelectorAll('.page#finance h2').forEach(h2 => {
+        if(h2.parentElement.innerText.includes('الخزنة الرئيسية')) {
+            h2.id = 'vault_secret_balance';
+            h2.style.cursor = 'pointer';
+            h2.title = 'اضغط لعرض الرصيد';
+            h2.onclick = checkVaultPin;
+        } else if (h2.innerText.includes('ج')) {
+            h2.innerText = ''; // تنظيف العناوين الغلط اللي ظهرت فوق الجداول
         }
     });
 
-    // 2. تحميل التكاليف الثابتة في المربعات
+    // رسم الرصيد المشفر أو المفتوح
+    let vElement = document.getElementById('vault_secret_balance');
+    if(vElement) {
+        if(!window.isVaultUnlocked) {
+            vElement.innerHTML = '<i class="fas fa-eye-slash" style="color:#7f8c8d; font-size:24px;"></i> <span style="letter-spacing:5px;">****</span> ج';
+        } else {
+            vElement.innerHTML = '<i class="fas fa-eye" style="color:#27ae60; font-size:24px;"></i> ' + window.currentVaultBalance.toFixed(2) + ' ج';
+        }
+    }
+
+    // تحليل التعادل والمصاريف
     let fc = JSON.parse(localStorage.getItem('neo_fixed_costs_v1')) || { rent: 25000, salaries: 13000, utilities: 5000 };
     let inputs = document.querySelectorAll('.finance-grid input');
     if(inputs.length >= 3) {
-        inputs[0].value = fc.utilities || 0; // مرافق
-        inputs[1].value = fc.salaries || 0;  // رواتب
-        inputs[2].value = fc.rent || 0;      // إيجار
+        inputs[0].value = fc.utilities || 0;
+        inputs[1].value = fc.salaries || 0;
+        inputs[2].value = fc.rent || 0;
+        
+        let totalFixed = (fc.utilities + fc.salaries + fc.rent);
+        let breakEven = totalFixed / 0.6; // افترضنا هامش ربح 60% عشان نحسب التعادل
+        
+        // تفعيل المربع المنقط
+        let analysisBox = document.querySelector('.finance-grid').parentElement.querySelector('div[style*="dashed"]') || document.querySelectorAll('.finance-grid')[0].nextElementSibling;
+        if(analysisBox) {
+            analysisBox.innerHTML = `
+            <div style="padding:15px; border:2px dashed var(--primary); border-radius:10px; text-align:center; margin-top:15px; background:white;">
+                <div style="color:var(--text); margin-bottom:10px; font-size:14px;">إجمالي المصاريف الثابتة شهرياً: <b>${totalFixed.toLocaleString()} ج</b></div>
+                <div style="color:#e74c3c; font-size:15px; font-weight:bold;"><i class="fas fa-chart-line"></i> نقطة التعادل (Break-even):</div>
+                <div style="color:var(--text); font-size:13px; margin-top:5px;">لازم تبيع شهرياً بـ <b style="font-size:18px; color:var(--primary);">${Math.round(breakEven).toLocaleString()} ج</b> لتغطية مصاريفك (بدون مكسب أو خسارة).</div>
+            </div>`;
+        }
     }
 
-    // 3. تحميل الموردين في الجدول الأول
+    // الموردين
     let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
-    let tables = document.querySelectorAll('table tbody');
+    let tables = document.querySelectorAll('.page#finance table tbody');
     if(tables.length >= 1) {
         tables[0].innerHTML = suppliers.map(s => `<tr style="text-align:center;">
             <td><strong>${s.name}</strong></td>
@@ -1299,78 +1340,90 @@ function renderFinance() {
         </tr>`).join('');
     }
 
-    // 4. ربط الزراير أوتوماتيك (عشان تشتغل من غير ما نعدل الـ HTML)
+    // ربط الزراير
     document.querySelectorAll('button').forEach(btn => {
         if(btn.innerText.includes('حفظ وتحديث التحليل')) btn.onclick = saveFixedCosts;
         if(btn.innerText.includes('إضافة مورد')) btn.onclick = addSupplier;
         if(btn.innerText.includes('إيداع (توريد)')) btn.onclick = () => quickVaultTx('in');
-        if(btn.innerText.includes('سحب')) {
-            // عشان ميتلخبطش مع زرار سحب المخزن
-            if(!btn.innerHTML.includes('fa-minus')) btn.onclick = () => quickVaultTx('out');
-        }
+        if(btn.innerText.includes('سحب')) { if(!btn.innerHTML.includes('fa-minus')) btn.onclick = () => quickVaultTx('out'); }
     });
 }
 
-// === دوال التشغيل الفعلية ===
+// === دوال التشغيل ===
 
-function saveFixedCosts() {
-    let inputs = document.querySelectorAll('.finance-grid input');
-    if(inputs.length >= 3) {
-        let fc = {
-            utilities: parseFloat(inputs[0].value) || 0,
-            salaries: parseFloat(inputs[1].value) || 0,
-            rent: parseFloat(inputs[2].value) || 0
-        };
-        localStorage.setItem('neo_fixed_costs_v1', JSON.stringify(fc));
-        try { database.ref('NeoCafe/neo_fixed_costs_v1').set(fc); } catch(e){}
-        alert('تم حفظ التكاليف الثابتة وتحديث التحليل المالي بنجاح 📊✅');
+function checkVaultPin() {
+    if(window.isVaultUnlocked) {
+        window.isVaultUnlocked = false; 
         renderFinance();
+    } else {
+        document.getElementById('vault_pin_input').value = '';
+        openModal('modal_vault_pin');
+    }
+}
+function verifyVaultPin() {
+    let pin = document.getElementById('vault_pin_input').value;
+    if(pin === '1111') { // <--- ده الباسورد بتاع المدير
+        window.isVaultUnlocked = true;
+        closeModal();
+        renderFinance();
+        // هيقفل نفسه تاني أوتوماتيك بعد 15 ثانية للرئيسية
+        setTimeout(() => { window.isVaultUnlocked = false; renderFinance(); }, 15000); 
+    } else {
+        alert('❌ الرقم السري غير صحيح!');
     }
 }
 
 function quickVaultTx(type) {
-    let title = type === 'in' ? 'إيداع نقدي للخزنة 📥' : 'سحب من الخزنة 📤';
-    let amount = prompt(title + '\n\nأدخل المبلغ:');
-    if(!amount || isNaN(amount) || parseFloat(amount) <= 0) return;
-
-    let note = prompt('سبب ' + (type === 'in' ? 'الإيداع:' : 'السحب:') + '\n(مثال: إيراد وردية، دفع فاتورة كهرباء، الخ...)');
-
+    document.getElementById('cv_type').value = type;
+    document.getElementById('cv_title').innerHTML = type === 'in' ? '<i class="fas fa-arrow-down" style="color:#27ae60;"></i> إيداع نقدي للخزنة' : '<i class="fas fa-arrow-up" style="color:#e74c3c;"></i> سحب من الخزنة';
+    document.getElementById('cv_amount').value = '';
+    document.getElementById('cv_note').value = '';
+    openModal('modal_custom_vault');
+}
+function confirmVaultTx() {
+    let type = document.getElementById('cv_type').value;
+    let amount = parseFloat(document.getElementById('cv_amount').value);
+    let note = document.getElementById('cv_note').value;
+    if(!amount || amount <= 0) return alert('أدخل مبلغ صحيح!');
+    
     let vaultData = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
-    vaultData.push({
-        id: 'v_' + Date.now(),
-        type: type,
-        amount: parseFloat(amount),
-        note: note || (type === 'in' ? 'إيداع عام' : 'سحب عام'),
-        date: new Date().toISOString()
-    });
-
+    vaultData.push({ id: 'v_' + Date.now(), type: type, amount: amount, note: note || (type === 'in' ? 'إيداع عام' : 'سحب عام'), date: new Date().toISOString() });
     localStorage.setItem('neo_vault_v1', JSON.stringify(vaultData));
     try { database.ref('NeoCafe/neo_vault_v1').set(vaultData); } catch(e) {}
-
+    
+    closeModal();
+    window.isVaultUnlocked = true; // نفتح الخزنة لحظيا عشان تشوف الرقم الجديد
     renderFinance();
-    alert('تم تسجيل العملية في الدرج بنجاح 💰✅');
+    setTimeout(() => { window.isVaultUnlocked = false; renderFinance(); }, 5000); // ونقفلها تاني
+}
+
+function saveFixedCosts() {
+    let inputs = document.querySelectorAll('.finance-grid input');
+    if(inputs.length >= 3) {
+        let fc = { utilities: parseFloat(inputs[0].value) || 0, salaries: parseFloat(inputs[1].value) || 0, rent: parseFloat(inputs[2].value) || 0 };
+        localStorage.setItem('neo_fixed_costs_v1', JSON.stringify(fc));
+        try { database.ref('NeoCafe/neo_fixed_costs_v1').set(fc); } catch(e){}
+        renderFinance();
+    }
 }
 
 function addSupplier() {
-    let name = prompt('اسم المورد (مثال: شركة جهينة، عم محمد للبن):'); if(!name) return;
-    let phone = prompt('رقم التليفون:');
-    let supplies = prompt('بيورد إيه؟ (مثال: ألبان، بن، بلاستيكات):');
+    document.getElementById('cs_name').value = '';
+    document.getElementById('cs_phone').value = '';
+    document.getElementById('cs_supplies').value = '';
+    openModal('modal_custom_supplier');
+}
+function confirmAddSupplier() {
+    let name = document.getElementById('cs_name').value;
+    let phone = document.getElementById('cs_phone').value || '-';
+    let supplies = document.getElementById('cs_supplies').value || '-';
+    if(!name) return alert('اكتب اسم المورد!');
 
     let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
-    suppliers.push({ id: 'sup_'+Date.now(), name, phone: phone || '-', supplies: supplies || '-' });
-    
+    suppliers.push({ id: 'sup_'+Date.now(), name, phone, supplies });
     localStorage.setItem('neo_suppliers_v1', JSON.stringify(suppliers));
     try { database.ref('NeoCafe/neo_suppliers_v1').set(suppliers); } catch(e){}
+    closeModal();
     renderFinance();
-}
-
-function deleteSupplier(id) {
-    if(confirm('متأكد إنك عاوز تمسح المورد ده من الأجندة؟ 🗑️')) {
-        let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
-        suppliers = suppliers.filter(s => s.id !== id);
-        localStorage.setItem('neo_suppliers_v1', JSON.stringify(suppliers));
-        try { database.ref('NeoCafe/neo_suppliers_v1').set(suppliers); } catch(e){}
-        renderFinance();
-    }
 }
 </script>
