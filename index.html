@@ -1264,4 +1264,113 @@ function saveStaffAction(){ const id=document.getElementById('staff_action_id').
 
 function openCloseShiftModal(){ const s = DB.getData(DB.keys.sales); const e = DB.getData(DB.keys.exp); const targetDate = getBusinessDate(new Date()); const ts = s.filter(x => getBusinessDate(x.date) === targetDate); const te = e.filter(x => getBusinessDate(x.date) === targetDate).reduce((a,b)=>a+b.amount,0); const cs=ts.filter(x=>x.method==='cash').reduce((a,b)=>a+b.total,0),vs=ts.filter(x=>x.method==='vodafone').reduce((a,b)=>a+b.total,0),is=ts.filter(x=>x.method==='insta').reduce((a,b)=>a+b.total,0),vis=ts.filter(x=>x.method==='visa').reduce((a,b)=>a+b.total,0); const debtIncomes = ts.filter(x=>x.type==='debt_payment').reduce((a,b)=>a+b.total,0); const html=`<div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>مبيعات كاش (أوردرات):</span><b>${cs - debtIncomes} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;color:var(--success);"><span>تسديد ديون (كاش):</span><b>+ ${debtIncomes} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>فودافون كاش:</span><b>${vs} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>انستا باي:</span><b>${is} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>فيزا:</span><b>${vis} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:2px solid #000;padding:10px 0;font-size:18px;"><span>الإجمالي العام:</span><b>${(cs+vs+is+vis).toFixed(2)} ج</b></div><div style="display:flex;justify-content:space-between;color:red;padding:5px;"><span>مصروفات مسحوبة (من الدرج):</span><b>- ${te} ج</b></div><div style="background:#f0fdf4;padding:10px;text-align:center;border:1px solid green;margin-top:10px;font-weight:bold;font-size:20px;color:var(--primary-dark);">الصافي النقدي بالدرج: ${(cs-te).toFixed(2)} ج</div>`; document.getElementById('shift_report_body').innerHTML=html;openModal('modal_close_shift'); }
 function printShiftReport(){window.print();}
+/* ================== الموتور الشامل لصفحة الخزنة والموردين ================== */
+
+function renderFinance() {
+    // 1. حساب وعرض رصيد الخزنة الرئيسي
+    let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
+    let balance = vault.reduce((sum, tx) => tx.type === 'in' ? sum + parseFloat(tx.amount) : sum - parseFloat(tx.amount), 0);
+    
+    // البحث عن مكان الرقم الكبير وتحديثه
+    document.querySelectorAll('h2').forEach(h2 => {
+        if(h2.innerText.includes('ج') || h2.innerText.includes('0.00')) {
+            h2.innerText = balance.toFixed(2) + ' ج';
+        }
+    });
+
+    // 2. تحميل التكاليف الثابتة في المربعات
+    let fc = JSON.parse(localStorage.getItem('neo_fixed_costs_v1')) || { rent: 25000, salaries: 13000, utilities: 5000 };
+    let inputs = document.querySelectorAll('.finance-grid input');
+    if(inputs.length >= 3) {
+        inputs[0].value = fc.utilities || 0; // مرافق
+        inputs[1].value = fc.salaries || 0;  // رواتب
+        inputs[2].value = fc.rent || 0;      // إيجار
+    }
+
+    // 3. تحميل الموردين في الجدول الأول
+    let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
+    let tables = document.querySelectorAll('table tbody');
+    if(tables.length >= 1) {
+        tables[0].innerHTML = suppliers.map(s => `<tr style="text-align:center;">
+            <td><strong>${s.name}</strong></td>
+            <td dir="ltr">${s.phone}</td>
+            <td><span style="background:var(--bg); padding:5px 10px; border-radius:5px;">${s.supplies}</span></td>
+            <td><button onclick="deleteSupplier('${s.id}')" style="color:white; background:#e74c3c; padding:5px 10px; border-radius:5px; border:none; cursor:pointer;"><i class="fas fa-trash"></i> مسح</button></td>
+        </tr>`).join('');
+    }
+
+    // 4. ربط الزراير أوتوماتيك (عشان تشتغل من غير ما نعدل الـ HTML)
+    document.querySelectorAll('button').forEach(btn => {
+        if(btn.innerText.includes('حفظ وتحديث التحليل')) btn.onclick = saveFixedCosts;
+        if(btn.innerText.includes('إضافة مورد')) btn.onclick = addSupplier;
+        if(btn.innerText.includes('إيداع (توريد)')) btn.onclick = () => quickVaultTx('in');
+        if(btn.innerText.includes('سحب')) {
+            // عشان ميتلخبطش مع زرار سحب المخزن
+            if(!btn.innerHTML.includes('fa-minus')) btn.onclick = () => quickVaultTx('out');
+        }
+    });
+}
+
+// === دوال التشغيل الفعلية ===
+
+function saveFixedCosts() {
+    let inputs = document.querySelectorAll('.finance-grid input');
+    if(inputs.length >= 3) {
+        let fc = {
+            utilities: parseFloat(inputs[0].value) || 0,
+            salaries: parseFloat(inputs[1].value) || 0,
+            rent: parseFloat(inputs[2].value) || 0
+        };
+        localStorage.setItem('neo_fixed_costs_v1', JSON.stringify(fc));
+        try { database.ref('NeoCafe/neo_fixed_costs_v1').set(fc); } catch(e){}
+        alert('تم حفظ التكاليف الثابتة وتحديث التحليل المالي بنجاح 📊✅');
+        renderFinance();
+    }
+}
+
+function quickVaultTx(type) {
+    let title = type === 'in' ? 'إيداع نقدي للخزنة 📥' : 'سحب من الخزنة 📤';
+    let amount = prompt(title + '\n\nأدخل المبلغ:');
+    if(!amount || isNaN(amount) || parseFloat(amount) <= 0) return;
+
+    let note = prompt('سبب ' + (type === 'in' ? 'الإيداع:' : 'السحب:') + '\n(مثال: إيراد وردية، دفع فاتورة كهرباء، الخ...)');
+
+    let vaultData = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
+    vaultData.push({
+        id: 'v_' + Date.now(),
+        type: type,
+        amount: parseFloat(amount),
+        note: note || (type === 'in' ? 'إيداع عام' : 'سحب عام'),
+        date: new Date().toISOString()
+    });
+
+    localStorage.setItem('neo_vault_v1', JSON.stringify(vaultData));
+    try { database.ref('NeoCafe/neo_vault_v1').set(vaultData); } catch(e) {}
+
+    renderFinance();
+    alert('تم تسجيل العملية في الدرج بنجاح 💰✅');
+}
+
+function addSupplier() {
+    let name = prompt('اسم المورد (مثال: شركة جهينة، عم محمد للبن):'); if(!name) return;
+    let phone = prompt('رقم التليفون:');
+    let supplies = prompt('بيورد إيه؟ (مثال: ألبان، بن، بلاستيكات):');
+
+    let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
+    suppliers.push({ id: 'sup_'+Date.now(), name, phone: phone || '-', supplies: supplies || '-' });
+    
+    localStorage.setItem('neo_suppliers_v1', JSON.stringify(suppliers));
+    try { database.ref('NeoCafe/neo_suppliers_v1').set(suppliers); } catch(e){}
+    renderFinance();
+}
+
+function deleteSupplier(id) {
+    if(confirm('متأكد إنك عاوز تمسح المورد ده من الأجندة؟ 🗑️')) {
+        let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
+        suppliers = suppliers.filter(s => s.id !== id);
+        localStorage.setItem('neo_suppliers_v1', JSON.stringify(suppliers));
+        try { database.ref('NeoCafe/neo_suppliers_v1').set(suppliers); } catch(e){}
+        renderFinance();
+    }
+}
 </script>
