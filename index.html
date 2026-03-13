@@ -256,7 +256,7 @@
 <body>
 
     <button class="mobile-menu-toggle" onclick="document.getElementById('mainSidebar').classList.toggle('show-mobile')"><i class="fas fa-bars"></i></button>
-    <audio id="orderAlertSound" src="https://translate.google.com/translate_tts?ie=UTF-8&q=New+order+for+Neo+Cafe&tl=en&client=tw-ob" preload="auto"></audio>
+    <audio id="orderAlertSound" src="alert.mp3" preload="auto"></audio>
 
     <div class="cloud-status" id="cloudStatusBadge">
         <div id="cloudIndicator" class="indicator"></div>
@@ -684,7 +684,6 @@ database.ref('NeoCafe/neo_kitchen_v1').on('value', snap => {
 /* ================== استقبال الأوردر الأونلاين ================== */
 database.ref('NeoCafe/online_orders').on('child_added', snap => {
     let order = snap.val(); let key = snap.key;
-    try { document.getElementById('orderAlertSound').play(); } catch(e){}
     
     let tId = isNaN(order.table) ? order.table : Number(order.table);
     if(!tablesOrder[tId]) tablesOrder[tId] = [];
@@ -701,22 +700,24 @@ database.ref('NeoCafe/online_orders').on('child_added', snap => {
     
     database.ref('NeoCafe/online_orders/' + key).remove();
     
-if(currentRole === 'admin' || currentRole === 'cashier') {
-                if(document.getElementById('pos').classList.contains('active')) { renderMap(); if(currentTable==tId) renderCart(); }
-                let cInfo = order.customerName ? `\nالاسم: ${order.customerName}` : '';
-                let pInfo = order.customerPhone ? `\nالموبايل: ${order.customerPhone}` : '';
-                
-                // تشغيل الصوت الإنجليزي الأول
-                let audio = document.getElementById('orderAlertSound');
-                audio.currentTime = 0;
-                let playPromise = audio.play();
-                if (playPromise !== undefined) { playPromise.catch(e => console.log("تم منع الصوت تلقائياً من المتصفح")); }
-                
-                // تأخير الإشعار ثانية عشان الصوت يلحق يشتغل، وبعدين يجبرك تدوس OK
-                setTimeout(() => {
-                    alert('🔔 تنبيه هام: أوردر أونلاين جديد من: ' + tName + cInfo + pInfo + '\n\nاضغط OK (موافق) لاستلام الأوردر ✅');
-                }, 1000);
-            }    }
+    if(currentRole === 'admin' || currentRole === 'cashier') {
+        if(document.getElementById('pos').classList.contains('active')) { renderMap(); if(currentTable==tId) renderCart(); }
+        let cInfo = order.customerName ? `\nالاسم: ${order.customerName}` : '';
+        let pInfo = order.customerPhone ? `\nالموبايل: ${order.customerPhone}` : '';
+        
+        // تشغيل الصوت الإنجليزي الأول
+        let audio = document.getElementById('orderAlertSound');
+        if(audio) {
+            audio.currentTime = 0;
+            let playPromise = audio.play();
+            if (playPromise !== undefined) { playPromise.catch(e => console.log("تم منع الصوت تلقائياً من المتصفح")); }
+        }
+        
+        // تأخير الإشعار ثانية عشان الصوت يلحق يشتغل، وبعدين يجبرك تدوس OK
+        setTimeout(() => {
+            alert('🔔 تنبيه هام: أوردر أونلاين جديد من: ' + tName + cInfo + pInfo + '\n\nاضغط OK (موافق) لاستلام الأوردر ✅');
+        }, 1000);
+    }
 });
 
 // المزامنة الشاملة من السحابة (عشان التابلت والموبايل يشوفوا كل الداتا)
