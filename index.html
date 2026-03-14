@@ -1264,14 +1264,16 @@ function saveStaffAction(){ const id=document.getElementById('staff_action_id').
 
 function openCloseShiftModal(){ const s = DB.getData(DB.keys.sales); const e = DB.getData(DB.keys.exp); const targetDate = getBusinessDate(new Date()); const ts = s.filter(x => getBusinessDate(x.date) === targetDate); const te = e.filter(x => getBusinessDate(x.date) === targetDate).reduce((a,b)=>a+b.amount,0); const cs=ts.filter(x=>x.method==='cash').reduce((a,b)=>a+b.total,0),vs=ts.filter(x=>x.method==='vodafone').reduce((a,b)=>a+b.total,0),is=ts.filter(x=>x.method==='insta').reduce((a,b)=>a+b.total,0),vis=ts.filter(x=>x.method==='visa').reduce((a,b)=>a+b.total,0); const debtIncomes = ts.filter(x=>x.type==='debt_payment').reduce((a,b)=>a+b.total,0); const html=`<div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>مبيعات كاش (أوردرات):</span><b>${cs - debtIncomes} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;color:var(--success);"><span>تسديد ديون (كاش):</span><b>+ ${debtIncomes} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>فودافون كاش:</span><b>${vs} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>انستا باي:</span><b>${is} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>فيزا:</span><b>${vis} ج</b></div><div style="display:flex;justify-content:space-between;border-bottom:2px solid #000;padding:10px 0;font-size:18px;"><span>الإجمالي العام:</span><b>${(cs+vs+is+vis).toFixed(2)} ج</b></div><div style="display:flex;justify-content:space-between;color:red;padding:5px;"><span>مصروفات مسحوبة (من الدرج):</span><b>- ${te} ج</b></div><div style="background:#f0fdf4;padding:10px;text-align:center;border:1px solid green;margin-top:10px;font-weight:bold;font-size:20px;color:var(--primary-dark);">الصافي النقدي بالدرج: ${(cs-te).toFixed(2)} ج</div>`; document.getElementById('shift_report_body').innerHTML=html;openModal('modal_close_shift'); }
 function printShiftReport(){window.print();}
-/* ================== الموتور الشامل لصفحة الخزنة والموردين (النسخة الاحترافية) ================== */
+/* ================== الموتور الشامل لصفحة الخزنة والموردين (النسخة الاحترافية V3) ================== */
 
-// 1. حقن الشاشات المنبثقة الشيك (عشان منعدلش في الـ HTML فوق)
+// 1. حقن الشاشات المنبثقة (ضفنا شاشة سجل حركات الخزنة)
 (function injectFinanceModals() {
     if(document.getElementById('modal_custom_vault')) return;
     document.body.insertAdjacentHTML('beforeend', `
     <div id="modal_custom_vault" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 id="cv_title" style="color:var(--primary); margin-bottom:15px;">الخزنة</h3><input type="hidden" id="cv_type"><label style="font-size:12px; font-weight:bold;">المبلغ:</label><input type="number" id="cv_amount" class="form-control" placeholder="أدخل المبلغ هنا..."><label style="font-size:12px; font-weight:bold;">البيان / الملاحظات:</label><input type="text" id="cv_note" class="form-control" placeholder="سبب الإيداع أو السحب..."><button class="btn-action" onclick="confirmVaultTx()" style="width:100%"><i class="fas fa-check"></i> تأكيد العملية</button></div></div>
     
+    <div id="modal_vault_log" class="modal"><div class="modal-content" style="max-width:600px;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--primary); margin-bottom:15px;"><i class="fas fa-history"></i> سجل حركات الخزنة (تعديل الأخطاء)</h3><div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; text-align:center; font-size:13px;"><thead><tr style="background:var(--primary); color:white;"><th>النوع</th><th>المبلغ</th><th>البيان</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody id="vault_log_tbody"></tbody></table></div></div></div>
+
     <div id="modal_custom_supplier" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--primary); margin-bottom:15px;"><i class="fas fa-truck"></i> إضافة مورد جديد</h3><input type="text" id="cs_name" class="form-control" placeholder="اسم المورد (ضروري)..."><input type="text" id="cs_phone" class="form-control" placeholder="رقم التليفون..."><input type="text" id="cs_supplies" class="form-control" placeholder="بيورد إيه؟..."><button class="btn-action" onclick="confirmAddSupplier()" style="width:100%"><i class="fas fa-save"></i> حفظ المورد</button></div></div>
 
     <div id="modal_vault_pin" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:#e74c3c; margin-bottom:10px;"><i class="fas fa-lock"></i> الخزنة محمية</h3><p style="text-align:center; font-size:13px; margin-bottom:15px; color:#555;">برجاء إدخال الرقم السري للمدير لعرض الرصيد</p><input type="password" id="vault_pin_input" class="form-control" placeholder="****" style="text-align:center; font-size:30px; letter-spacing:15px;"><button class="btn-action" onclick="verifyVaultPin()" style="width:100%; background:#e74c3c;"><i class="fas fa-unlock"></i> فتح الخزنة</button></div></div>
@@ -1283,62 +1285,99 @@ function renderFinance() {
     let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
     window.currentVaultBalance = vault.reduce((sum, tx) => tx.type === 'in' ? sum + parseFloat(tx.amount) : sum - parseFloat(tx.amount), 0);
     
-    // تنظيف الأرقام الغلط وتحديد الخزنة الحقيقية
-    document.querySelectorAll('.page#finance h2').forEach(h2 => {
-        if(h2.parentElement.innerText.includes('الخزنة الرئيسية')) {
-            h2.id = 'vault_secret_balance';
-            h2.style.cursor = 'pointer';
-            h2.title = 'اضغط لعرض الرصيد';
-            h2.onclick = checkVaultPin;
-        } else if (h2.innerText.includes('ج')) {
-            h2.innerText = ''; // تنظيف العناوين الغلط اللي ظهرت فوق الجداول
+    // تنظيف الأرقام الغلط وإضافة زرار (سجل الحركات) الشيك
+    let vaultCard = document.querySelector('.page#finance .finance-grid > div:first-child');
+    if(vaultCard) {
+        let titleH3 = vaultCard.querySelector('h3');
+        if(titleH3 && !titleH3.innerHTML.includes('fa-history')) {
+            titleH3.innerHTML = `الخزنة الرئيسية (The Vault) <button onclick="openVaultLog()" style="float:left; background:none; border:none; color:var(--gold); font-size:18px; cursor:pointer;" title="سجل الحركات وإصلاح الأخطاء"><i class="fas fa-history"></i></button>`;
         }
-    });
-
-    // رسم الرصيد المشفر أو المفتوح
-    let vElement = document.getElementById('vault_secret_balance');
-    if(vElement) {
-        if(!window.isVaultUnlocked) {
-            vElement.innerHTML = '<i class="fas fa-eye-slash" style="color:#7f8c8d; font-size:24px;"></i> <span style="letter-spacing:5px;">****</span> ج';
-        } else {
-            vElement.innerHTML = '<i class="fas fa-eye" style="color:#27ae60; font-size:24px;"></i> ' + window.currentVaultBalance.toFixed(2) + ' ج';
-        }
+        
+        let allH2s = vaultCard.querySelectorAll('h2');
+        allH2s.forEach((h2, index) => {
+            if(index === 0) { // هنخلي أول H2 هو الخزنة بس
+                h2.id = 'vault_secret_balance';
+                h2.style.cursor = 'pointer';
+                h2.title = 'اضغط لعرض الرصيد';
+                h2.onclick = checkVaultPin;
+                
+                if(!window.isVaultUnlocked) {
+                    h2.innerHTML = '<i class="fas fa-eye-slash" style="color:#7f8c8d; font-size:24px;"></i> <span style="letter-spacing:5px;">****</span> ج';
+                } else {
+                    h2.innerHTML = '<i class="fas fa-eye" style="color:#27ae60; font-size:24px;"></i> ' + window.currentVaultBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ج';
+                }
+            } else {
+                h2.style.display = 'none'; // نخفي أي H2 زيادة عشان ميعملش دوشة
+            }
+        });
     }
 
-    // تحليل التعادل والمصاريف
+    // تنظيف أي H2 بالغلط فوق الجداول
+    document.querySelectorAll('.page#finance > h2, .page#finance table h2').forEach(h => h.style.display = 'none');
+
+    // 3. تحليل التعادل العميق (باليوم)
     let fc = JSON.parse(localStorage.getItem('neo_fixed_costs_v1')) || { rent: 25000, salaries: 13000, utilities: 5000 };
     let inputs = document.querySelectorAll('.finance-grid input');
     if(inputs.length >= 3) {
-        inputs[0].value = fc.utilities || 0;
-        inputs[1].value = fc.salaries || 0;
-        inputs[2].value = fc.rent || 0;
+        inputs[0].value = fc.utilities || 0; inputs[1].value = fc.salaries || 0; inputs[2].value = fc.rent || 0;
         
         let totalFixed = (fc.utilities + fc.salaries + fc.rent);
-        let breakEven = totalFixed / 0.6; // افترضنا هامش ربح 60% عشان نحسب التعادل
+        let breakEven = totalFixed / 0.6; // التارجت الشهري
         
-        // تفعيل المربع المنقط
+        // حسابات اليوميات الذكية
+        let now = new Date();
+        let daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        let daysLeft = daysInMonth - now.getDate() + 1; // الأيام المتبقية في الشهر
+        
+        let remainingTarget = breakEven - window.currentVaultBalance; // المتبقي بعد خصم رصيد الخزنة الحالي
+        if(remainingTarget < 0) remainingTarget = 0; // لو كسرنا التارجت
+        
+        let dailyTarget = remainingTarget / daysLeft; // المطلوب يومياً
+        
         let analysisBox = document.querySelector('.finance-grid').parentElement.querySelector('div[style*="dashed"]') || document.querySelectorAll('.finance-grid')[0].nextElementSibling;
         if(analysisBox) {
             analysisBox.innerHTML = `
             <div style="padding:15px; border:2px dashed var(--primary); border-radius:10px; text-align:center; margin-top:15px; background:white;">
-                <div style="color:var(--text); margin-bottom:10px; font-size:14px;">إجمالي المصاريف الثابتة شهرياً: <b>${totalFixed.toLocaleString()} ج</b></div>
-                <div style="color:#e74c3c; font-size:15px; font-weight:bold;"><i class="fas fa-chart-line"></i> نقطة التعادل (Break-even):</div>
-                <div style="color:var(--text); font-size:13px; margin-top:5px;">لازم تبيع شهرياً بـ <b style="font-size:18px; color:var(--primary);">${Math.round(breakEven).toLocaleString()} ج</b> لتغطية مصاريفك (بدون مكسب أو خسارة).</div>
+                <div style="color:var(--text); margin-bottom:10px; font-size:14px;">إجمالي المصاريف الثابتة: <b>${totalFixed.toLocaleString()} ج</b> | تارجت التعادل الشهري: <b>${Math.round(breakEven).toLocaleString()} ج</b></div>
+                <div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; display:inline-block; border:1px solid #eee;">
+                    <span style="color:#7f8c8d; font-size:13px;">باقي على التارجت:</span> <b style="color:#e74c3c; font-size:18px;">${Math.round(remainingTarget).toLocaleString()} ج</b>
+                    <span style="color:#7f8c8d; font-size:13px; margin:0 10px;">|</span>
+                    <span style="color:#7f8c8d; font-size:13px;">الأيام المتبقية:</span> <b style="color:var(--primary);">${daysLeft} يوم</b>
+                </div>
+                <div style="color:var(--text); font-size:15px;">الهدف اليومي المطلوب من الآن لنهاية الشهر: <b style="font-size:20px; color:#27ae60; background:#e8f8f5; padding:2px 10px; border-radius:5px;">${Math.round(dailyTarget).toLocaleString()} ج / يومياً</b></div>
             </div>`;
         }
     }
 
-    // الموردين
+    // 4 & 5. الموردين والأرشيف (طريقة الفصل الذكية)
     let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
-    let tables = document.querySelectorAll('.page#finance table tbody');
-    if(tables.length >= 1) {
-        tables[0].innerHTML = suppliers.map(s => `<tr style="text-align:center;">
-            <td><strong>${s.name}</strong></td>
-            <td dir="ltr">${s.phone}</td>
-            <td><span style="background:var(--bg); padding:5px 10px; border-radius:5px;">${s.supplies}</span></td>
-            <td><button onclick="deleteSupplier('${s.id}')" style="color:white; background:#e74c3c; padding:5px 10px; border-radius:5px; border:none; cursor:pointer;"><i class="fas fa-trash"></i> مسح</button></td>
-        </tr>`).join('');
-    }
+    let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
+    
+    document.querySelectorAll('.page#finance table').forEach(tbl => {
+        let tbody = tbl.querySelector('tbody');
+        if(!tbody) return;
+        
+        // لو ده جدول الموردين
+        if(tbl.innerText.includes('اسم المورد')) {
+            tbody.innerHTML = suppliers.map(s => `<tr style="text-align:center; border-bottom:1px solid #eee;">
+                <td style="padding:10px;"><strong>${s.name}</strong></td>
+                <td dir="ltr">${s.phone || '-'}</td>
+                <td><span style="background:var(--bg); padding:5px 10px; border-radius:5px;">${s.supplies || '-'}</span></td>
+                <td><button onclick="deleteSupplier('${s.id}')" style="color:white; background:#e74c3c; padding:5px 10px; border-radius:5px; border:none; cursor:pointer;"><i class="fas fa-trash"></i> مسح</button></td>
+            </tr>`).join('');
+        }
+        
+        // لو ده جدول الأرشيف
+        if(tbl.innerText.includes('تاريخ الوردية') || tbl.innerText.includes('إجمالي المبيعات')) {
+            tbody.innerHTML = archive.slice(-15).reverse().map((day, index) => `<tr style="text-align:center; border-bottom:1px solid #eee;">
+                <td style="padding:10px; font-size:12px;">${day.date || 'غير محدد'}</td>
+                <td style="color:#27ae60; font-weight:bold;">${parseFloat(day.totalSales || 0).toLocaleString()} ج</td>
+                <td style="color:#e74c3c; font-weight:bold;">${parseFloat(day.totalExpenses || 0).toLocaleString()} ج</td>
+                <td style="font-weight:bold; color:var(--primary);">${parseFloat(day.netCash || 0).toLocaleString()} ج</td>
+                <td><button onclick="deleteArchiveRecord(${archive.length - 1 - index})" style="color:white; background:#e74c3c; padding:5px 10px; border-radius:5px; border:none; cursor:pointer;"><i class="fas fa-trash"></i> مسح</button></td>
+            </tr>`).join('');
+        }
+    });
 
     // ربط الزراير
     document.querySelectorAll('button').forEach(btn => {
@@ -1352,37 +1391,24 @@ function renderFinance() {
 // === دوال التشغيل ===
 
 function checkVaultPin() {
-    if(window.isVaultUnlocked) {
-        window.isVaultUnlocked = false; 
-        renderFinance();
-    } else {
-        document.getElementById('vault_pin_input').value = '';
-        openModal('modal_vault_pin');
-    }
+    if(window.isVaultUnlocked) { window.isVaultUnlocked = false; renderFinance(); } 
+    else { document.getElementById('vault_pin_input').value = ''; openModal('modal_vault_pin'); }
 }
 function verifyVaultPin() {
-    let pin = document.getElementById('vault_pin_input').value;
-    if(pin === '1111') { // <--- ده الباسورد بتاع المدير
-        window.isVaultUnlocked = true;
-        closeModal();
-        renderFinance();
-        // هيقفل نفسه تاني أوتوماتيك بعد 15 ثانية للرئيسية
+    if(document.getElementById('vault_pin_input').value === '1111') {
+        window.isVaultUnlocked = true; closeModal(); renderFinance();
         setTimeout(() => { window.isVaultUnlocked = false; renderFinance(); }, 15000); 
-    } else {
-        alert('❌ الرقم السري غير صحيح!');
-    }
+    } else alert('❌ الرقم السري غير صحيح!');
 }
 
 function quickVaultTx(type) {
     document.getElementById('cv_type').value = type;
     document.getElementById('cv_title').innerHTML = type === 'in' ? '<i class="fas fa-arrow-down" style="color:#27ae60;"></i> إيداع نقدي للخزنة' : '<i class="fas fa-arrow-up" style="color:#e74c3c;"></i> سحب من الخزنة';
-    document.getElementById('cv_amount').value = '';
-    document.getElementById('cv_note').value = '';
+    document.getElementById('cv_amount').value = ''; document.getElementById('cv_note').value = '';
     openModal('modal_custom_vault');
 }
 function confirmVaultTx() {
-    let type = document.getElementById('cv_type').value;
-    let amount = parseFloat(document.getElementById('cv_amount').value);
+    let type = document.getElementById('cv_type').value; let amount = parseFloat(document.getElementById('cv_amount').value);
     let note = document.getElementById('cv_note').value;
     if(!amount || amount <= 0) return alert('أدخل مبلغ صحيح!');
     
@@ -1391,39 +1417,164 @@ function confirmVaultTx() {
     localStorage.setItem('neo_vault_v1', JSON.stringify(vaultData));
     try { database.ref('NeoCafe/neo_vault_v1').set(vaultData); } catch(e) {}
     
-    closeModal();
-    window.isVaultUnlocked = true; // نفتح الخزنة لحظيا عشان تشوف الرقم الجديد
-    renderFinance();
-    setTimeout(() => { window.isVaultUnlocked = false; renderFinance(); }, 5000); // ونقفلها تاني
+    closeModal(); window.isVaultUnlocked = true; renderFinance();
+    setTimeout(() => { window.isVaultUnlocked = false; renderFinance(); }, 8000);
+}
+
+// سجل حركات الخزنة (لإصلاح الأخطاء)
+function openVaultLog() {
+    let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
+    document.getElementById('vault_log_tbody').innerHTML = vault.reverse().map(tx => `
+        <tr style="border-bottom:1px solid #ddd;">
+            <td style="padding:8px; color:${tx.type === 'in' ? '#27ae60' : '#e74c3c'}; font-weight:bold;">${tx.type === 'in' ? 'إيداع 📥' : 'سحب 📤'}</td>
+            <td style="font-weight:bold;">${parseFloat(tx.amount).toLocaleString()} ج</td>
+            <td>${tx.note}</td>
+            <td style="font-size:11px; color:#777;">${new Date(tx.date).toLocaleDateString('ar-EG')}</td>
+            <td><button onclick="deleteVaultTx('${tx.id}')" style="background:none; border:none; color:#e74c3c; cursor:pointer;" title="حذف لتصحيح الخطأ"><i class="fas fa-trash-alt"></i></button></td>
+        </tr>
+    `).join('');
+    openModal('modal_vault_log');
+}
+function deleteVaultTx(id) {
+    if(confirm('متأكد إنك عاوز تمسح الحركة دي عشان تصلح الغلطة؟ 🗑️')) {
+        let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
+        vault = vault.filter(tx => tx.id !== id);
+        localStorage.setItem('neo_vault_v1', JSON.stringify(vault));
+        try { database.ref('NeoCafe/neo_vault_v1').set(vault); } catch(e) {}
+        renderFinance(); openVaultLog(); // تحديث الشاشتين
+    }
 }
 
 function saveFixedCosts() {
     let inputs = document.querySelectorAll('.finance-grid input');
     if(inputs.length >= 3) {
-        let fc = { utilities: parseFloat(inputs[0].value) || 0, salaries: parseFloat(inputs[1].value) || 0, rent: parseFloat(inputs[2].value) || 0 };
+        let fc = { utilities: parseFloat(inputs[0].value)||0, salaries: parseFloat(inputs[1].value)||0, rent: parseFloat(inputs[2].value)||0 };
         localStorage.setItem('neo_fixed_costs_v1', JSON.stringify(fc));
         try { database.ref('NeoCafe/neo_fixed_costs_v1').set(fc); } catch(e){}
         renderFinance();
     }
 }
 
-function addSupplier() {
-    document.getElementById('cs_name').value = '';
-    document.getElementById('cs_phone').value = '';
-    document.getElementById('cs_supplies').value = '';
-    openModal('modal_custom_supplier');
-}
+function addSupplier() { document.getElementById('cs_name').value = ''; document.getElementById('cs_phone').value = ''; document.getElementById('cs_supplies').value = ''; openModal('modal_custom_supplier'); }
 function confirmAddSupplier() {
-    let name = document.getElementById('cs_name').value;
-    let phone = document.getElementById('cs_phone').value || '-';
-    let supplies = document.getElementById('cs_supplies').value || '-';
+    let name = document.getElementById('cs_name').value; let phone = document.getElementById('cs_phone').value || '-'; let supplies = document.getElementById('cs_supplies').value || '-';
     if(!name) return alert('اكتب اسم المورد!');
-
     let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
     suppliers.push({ id: 'sup_'+Date.now(), name, phone, supplies });
     localStorage.setItem('neo_suppliers_v1', JSON.stringify(suppliers));
     try { database.ref('NeoCafe/neo_suppliers_v1').set(suppliers); } catch(e){}
-    closeModal();
-    renderFinance();
+    closeModal(); renderFinance();
+}
+function deleteSupplier(id) {
+    if(confirm('متأكد إنك عاوز تمسح المورد؟ 🗑️')) {
+        let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || []; suppliers = suppliers.filter(s => s.id !== id);
+        localStorage.setItem('neo_suppliers_v1', JSON.stringify(suppliers)); try { database.ref('NeoCafe/neo_suppliers_v1').set(suppliers); } catch(e){}
+        renderFinance();
+    }
+}
+
+// مسح يومية من الأرشيف
+function deleteArchiveRecord(index) {
+    if(confirm('تحذير: هتمسح تقفيل اليومية دي من الأرشيف نهائياً.. متأكد؟ ⚠️')) {
+        let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
+        archive.splice(index, 1);
+        localStorage.setItem('neo_archive_v1', JSON.stringify(archive));
+        try { database.ref('NeoCafe/neo_archive_v1').set(archive); } catch(e){}
+        renderFinance();
+    }
+}
+/* ================== الموتور الإجباري لتقفيل اليومية (Z-Report) ================== */
+// السكريبت ده بيدور على زرار التقفيل ويشغله بالعافية على النظام الجديد ويفصل القديم تماماً
+setTimeout(function() {
+    let allElements = document.querySelectorAll('.nav-btn, button, a, li');
+    allElements.forEach(el => {
+        if (el.innerText && el.innerText.includes('تقفيل اليومية')) {
+            el.onclick = null; // بمسح أي كود قديم من عليه
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                executeZReport();
+            });
+        }
+    });
+}, 1500);
+
+function executeZReport() {
+    if(!confirm('⚠️ تحذير: هل أنت متأكد من تقفيل الوردية وتصفير المبيعات الحالية؟')) return;
+
+    let sales = JSON.parse(localStorage.getItem('neo_sales_v2')) || [];
+    let exps = JSON.parse(localStorage.getItem('neo_exp_v2')) || [];
+    
+    let totalSales = sales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+    let totalExp = exps.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+    let netCash = totalSales - totalExp;
+
+    // 1. الحفظ الإجباري في الأرشيف
+    let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
+    archive.push({
+        date: new Date().toLocaleString('ar-EG'),
+        totalSales: totalSales,
+        totalExpenses: totalExp,
+        netCash: netCash
+    });
+    localStorage.setItem('neo_archive_v1', JSON.stringify(archive));
+    try { database.ref('NeoCafe/neo_archive_v1').set(archive); } catch(e){}
+
+    // 2. تصفير الوردية الحالية
+    localStorage.setItem('neo_sales_v2', JSON.stringify([]));
+    localStorage.setItem('neo_exp_v2', JSON.stringify([]));
+    try { 
+        database.ref('NeoCafe/neo_sales_v2').set([]); 
+        database.ref('NeoCafe/neo_exp_v2').set([]); 
+    } catch(e){}
+
+    // 3. تحديث الشاشات
+    if(typeof updateDashboard === 'function') updateDashboard();
+    if(typeof renderFinance === 'function') renderFinance();
+
+    // 4. طباعة إيصال التقفيل (Z-Report) المظبوط للماكينة
+    if(confirm('تم التقفيل والحفظ في الأرشيف بنجاح ✅\n\nهل تريد طباعة إيصال التقفيل (Z-Report)؟')) {
+        let printWindow = window.open('', '_blank', 'width=350,height=600');
+        printWindow.document.write(`
+            <html dir="rtl">
+            <head>
+                <title>Z-Report NEO CAFE</title>
+                <style>
+                    body { font-family: 'Courier New', Courier, monospace; text-align: center; padding: 10px; color: #000; margin: 0; }
+                    h2 { margin: 5px 0; font-size: 24px; font-weight: bold; }
+                    h3 { margin: 5px 0; font-size: 18px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
+                    p { margin: 5px 0; font-size: 14px; font-weight: bold; }
+                    .line { border-top: 1px dashed #000; margin: 15px 0; }
+                    .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin: 10px 0; }
+                    .net-cash { font-size: 20px; font-weight: bold; border: 2px solid #000; padding: 10px; margin-top: 15px; }
+                </style>
+            </head>
+            <body>
+                <h2>NEO CAFE</h2>
+                <h3>تقرير التقفيل (Z-Report)</h3>
+                <p>التاريخ: ${new Date().toLocaleString('ar-EG')}</p>
+                <div class="line"></div>
+                
+                <div class="total-row"><span>إجمالي المبيعات:</span> <span>${totalSales.toLocaleString()} ج</span></div>
+                <div class="total-row"><span>إجمالي المصروفات:</span> <span>${totalExp.toLocaleString()} ج</span></div>
+                
+                <div class="net-cash">الصافي بالدرج: ${netCash.toLocaleString()} ج</div>
+                
+                <br><br>
+                <p style="text-align: right;">توقيع الكاشير: .................</p>
+                <p style="text-align: right;">توقيع المدير: .................</p>
+                <br>
+                <p style="font-size: 10px;">تم إصدار التقرير بواسطة نظام NEO ERP</p>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        
+        // بنستنى نص ثانية عشان الشاشة ترسم الوصل قبل الطباعة
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    }
 }
 </script>
