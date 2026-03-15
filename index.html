@@ -614,7 +614,7 @@
 
     <div id="loginScreen" style="position: fixed; inset: 0; background: var(--primary-dark); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column;"><div style="background: white; padding: 40px; border-radius: 15px; text-align: center; width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"><img src="assets/images/logo.png" style="width: 100px; margin-bottom: 20px;" onerror="this.style.display='none'"><h2 style="color: var(--primary); margin-bottom: 5px;">تسجيل الدخول</h2><p style="color: #7f8c8d; margin-bottom: 25px; font-size: 14px;">1111 مدير | 2222 كاشير<br>3333 ويتر | 4444 مطبخ</p><input type="password" id="loginPin" class="form-control" placeholder="****" style="text-align: center; font-size: 24px; letter-spacing: 10px; font-weight: bold;" onkeyup="if(event.key==='Enter') executeLogin()"><button class="btn-action" style="width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;" onclick="executeLogin()">دخول <i class="fas fa-sign-in-alt"></i></button></div></div>
 
-    <div id="receipt-area"><div class="r-header"><img src="assets/images/logo.png" alt="NEO" onerror="this.style.display='none'"><h2>NEO Café</h2><div class="r-slogan">✨ رمضانك جميل في نيو ✨</div></div><div class="r-meta"><div><span>فاتورة #:</span> <span id="p_id"></span></div><div><span>التاريخ:</span> <span id="p_date"></span></div><div><span>الطاولة:</span> <span id="p_table"></span></div><div><span>الوقت:</span> <span id="p_time"></span></div><div class="full"><span>الكاشير:</span> <span id="r_cashier_name">Admin</span></div><div class="full" id="r_customer_row" style="display:none;"><span>العميل:</span> <span id="r_customer_name"></span></div></div><table class="r-table"><thead><tr><th>الصنف</th><th>سعر</th><th>ع</th><th>إجمالي</th></tr></thead><tbody id="p_items"></tbody></table><div class="r-total-sec" style="display: block;"><div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;"><span>الإجمالي:</span><span><span id="p_subtotal">0</span> ج</span></div><div id="p_discount_row" style="display: none; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px;"><span>الخصم:</span><span>-<span id="p_discount_val">0</span> ج</span></div><div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; border-top: 2px dashed #000; margin-top: 5px; padding-top: 5px;"><span>المطلوب:</span><span><span id="p_total">0</span> ج</span></div><div id="r_loyalty_sec" style="display:none; text-align:center; border-top:1px dashed #000; margin-top:5px; padding-top:5px;"><b style="font-size:14px;">نقاطك الحالية: <span id="r_loyalty_points">0</span> ⭐</b><br><span style="font-size:11px;">شكراً لثقتك في نيو كافيه، جمع نقاط واستمتع بهداياك! 🎁</span></div><div style="text-align:center; font-size:12px; margin-top:5px; border-top:1px dotted #000;">طريقة الدفع: <span id="p_method"></span></div></div><div class="r-footer"><span class="welcome-text">نورتنا يا رايق ❤️</span><span class="powered-by">Powered by: Neo Cafe</span></div></div>
+    <div id="receipt-area"><div class="r-header"><img src="assets/images/logo.png" alt="NEO" onerror="this.style.display='none'"><h2>NEO Café</h2><div class="r-slogan">✨ رمضانك جميل في نيو ✨</div></div><div class="r-meta"><div><span>فاتورة #:</span> <span id="p_id"></span></div><div><span>التاريخ:</span> <span id="p_date"></span></div><div><span>الطاولة:</span> <span id="p_table"></span></div><div><span>الوقت:</span> <span id="p_time"></span></div><div class="full"><span>الكاشير:</span> <span id="r_cashier_name">Admin</span></div><div class="full" id="r_customer_row" style=@page { margin: 0; } body { margin: 0; padding-top: 10px; } "display:none;"><span>العميل:</span> <span id="r_customer_name"></span></div></div><table class="r-table"><thead><tr><th>الصنف</th><th>سعر</th><th>ع</th><th>إجمالي</th></tr></thead><tbody id="p_items"></tbody></table><div class="r-total-sec" style="display: block;"><div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;"><span>الإجمالي:</span><span><span id="p_subtotal">0</span> ج</span></div><div id="p_discount_row" style="display: none; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px;"><span>الخصم:</span><span>-<span id="p_discount_val">0</span> ج</span></div><div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; border-top: 2px dashed #000; margin-top: 5px; padding-top: 5px;"><span>المطلوب:</span><span><span id="p_total">0</span> ج</span></div><div id="r_loyalty_sec" style="display:none; text-align:center; border-top:1px dashed #000; margin-top:5px; padding-top:5px;"><b style="font-size:14px;">نقاطك الحالية: <span id="r_loyalty_points">0</span> ⭐</b><br><span style="font-size:11px;">شكراً لثقتك في نيو كافيه، جمع نقاط واستمتع بهداياك! 🎁</span></div><div style="text-align:center; font-size:12px; margin-top:5px; border-top:1px dotted #000;">طريقة الدفع: <span id="p_method"></span></div></div><div class="r-footer"><span class="welcome-text">نورتنا يا رايق ❤️</span><span class="powered-by">Powered by: Neo Cafe</span></div></div>
     <script>
 /* ================== Data Base (Local + Firebase) ================== */
 const DB = {
@@ -755,8 +755,32 @@ database.ref('NeoCafe').once('value').then(snap => {
 function init() {
     if(currentRole !== 'barista') { renderMap(); populateMenuEditCats(); renderCategories(); changeCat(Object.keys(MENU)[0]); updateDashboard(); renderInventory(); renderExpenses(); renderFinance(); checkStockAlerts(); renderLoyalty(); setupRecipeSelect(); }
 }
-function nav(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));if(event)event.currentTarget.classList.add('active');if(p==='dashboard')updateDashboard();if(p==='inventory')renderInventory();if(p==='expenses')renderExpenses();if(p==='kitchen')renderKitchen();if(p==='finance')renderFinance();if(p==='menu_edit')populateMenuEditCats();if(p==='loyalty')renderLoyalty(); document.getElementById('mainSidebar').classList.remove('show-mobile');}
-function openModal(id){ closeModal(); document.getElementById(id).classList.add('open'); }
+function nav(p){
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    document.getElementById(p).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    if(event) event.currentTarget.classList.add('active');
+    
+    // أوامر استدعاء الداتا فوراً عند فتح أي صفحة
+    if(p==='dashboard' && typeof updateDashboard === 'function') updateDashboard();
+    if(p==='inventory' && typeof renderInventory === 'function') renderInventory();
+    if(p==='expenses' && typeof renderExpenses === 'function') renderExpenses();
+    if(p==='kitchen' && typeof renderKitchen === 'function') renderKitchen();
+    if(p==='finance' && typeof renderFinance === 'function') renderFinance();
+    if(p==='menu_edit' && typeof populateMenuEditCats === 'function') populateMenuEditCats();
+    if(p==='loyalty' && typeof renderLoyalty === 'function') renderLoyalty();
+    
+    // 👇 دول اللي كانوا ناقصين (الموظفين والعملاء والضيافة)
+    if(p==='staff' && typeof renderStaff === 'function') renderStaff();
+    if(p==='debts') {
+        if(typeof renderDebts === 'function') renderDebts();
+        if(typeof renderHost === 'function') renderHost();
+    }
+    
+    // قفل القائمة في الموبايل
+    let sidebar = document.getElementById('mainSidebar');
+    if(sidebar) sidebar.classList.remove('show-mobile');
+}function openModal(id){ closeModal(); document.getElementById(id).classList.add('open'); }
 function closeModal(){ document.querySelectorAll('.modal').forEach(m=>m.classList.remove('open')); }
 
 function forceMenuSync() {
