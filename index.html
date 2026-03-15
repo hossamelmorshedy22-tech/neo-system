@@ -614,8 +614,53 @@
 
     <div id="loginScreen" style="position: fixed; inset: 0; background: var(--primary-dark); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column;"><div style="background: white; padding: 40px; border-radius: 15px; text-align: center; width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"><img src="assets/images/logo.png" style="width: 100px; margin-bottom: 20px;" onerror="this.style.display='none'"><h2 style="color: var(--primary); margin-bottom: 5px;">تسجيل الدخول</h2><p style="color: #7f8c8d; margin-bottom: 25px; font-size: 14px;">1111 مدير | 2222 كاشير<br>3333 ويتر | 4444 مطبخ</p><input type="password" id="loginPin" class="form-control" placeholder="****" style="text-align: center; font-size: 24px; letter-spacing: 10px; font-weight: bold;" onkeyup="if(event.key==='Enter') executeLogin()"><button class="btn-action" style="width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;" onclick="executeLogin()">دخول <i class="fas fa-sign-in-alt"></i></button></div></div>
 
-    <div id="receipt-area"><div class="r-header"><img src="assets/images/logo.png" alt="NEO" onerror="this.style.display='none'"><h2>NEO Café</h2><div class="r-slogan">✨ رمضانك جميل في نيو ✨</div></div><div class="r-meta"><div><span>فاتورة #:</span> <span id="p_id"></span></div><div><span>التاريخ:</span> <span id="p_date"></span></div><div><span>الطاولة:</span> <span id="p_table"></span></div><div><span>الوقت:</span> <span id="p_time"></span></div><div class="full"><span>الكاشير:</span> <span id="r_cashier_name">Admin</span></div><div class="full" id="r_customer_row" style=@page { margin: 0; } body { margin: 0; padding-top: 10px; } "display:none;"><span>العميل:</span> <span id="r_customer_name"></span></div></div><table class="r-table"><thead><tr><th>الصنف</th><th>سعر</th><th>ع</th><th>إجمالي</th></tr></thead><tbody id="p_items"></tbody></table><div class="r-total-sec" style="display: block;"><div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;"><span>الإجمالي:</span><span><span id="p_subtotal">0</span> ج</span></div><div id="p_discount_row" style="display: none; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px;"><span>الخصم:</span><span>-<span id="p_discount_val">0</span> ج</span></div><div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; border-top: 2px dashed #000; margin-top: 5px; padding-top: 5px;"><span>المطلوب:</span><span><span id="p_total">0</span> ج</span></div><div id="r_loyalty_sec" style="display:none; text-align:center; border-top:1px dashed #000; margin-top:5px; padding-top:5px;"><b style="font-size:14px;">نقاطك الحالية: <span id="r_loyalty_points">0</span> ⭐</b><br><span style="font-size:11px;">شكراً لثقتك في نيو كافيه، جمع نقاط واستمتع بهداياك! 🎁</span></div><div style="text-align:center; font-size:12px; margin-top:5px; border-top:1px dotted #000;">طريقة الدفع: <span id="p_method"></span></div></div><div class="r-footer"><span class="welcome-text">نورتنا يا رايق ❤️</span><span class="powered-by">Powered by: Neo Cafe</span></div></div>
-    <script>
+<style>
+    @media print {
+        @page { margin: 0 !important; }
+        body { margin: 0 !important; padding: 0 !important; }
+        #receipt-area { margin-top: 0 !important; padding-top: 5px !important; }
+    }
+</style>
+<div id="receipt-area">
+    <div class="r-header">
+        <img src="assets/images/logo.png" alt="NEO" onerror="this.style.display='none'">
+        <h2>NEO Café</h2>
+        <div class="r-slogan">✨ رمضانك جميل في نيو ✨</div>
+    </div>
+    <div class="r-meta">
+        <div><span>فاتورة #:</span> <span id="p_id"></span></div>
+        <div><span>التاريخ:</span> <span id="p_date"></span></div>
+        <div><span>الطاولة:</span> <span id="p_table"></span></div>
+        <div><span>الوقت:</span> <span id="p_time"></span></div>
+        <div class="full"><span>الكاشير:</span> <span id="r_cashier_name">Admin</span></div>
+        <div class="full" id="r_customer_row" style="display:none;"><span>العميل:</span> <span id="r_customer_name"></span></div>
+    </div>
+    <table class="r-table">
+        <thead><tr><th>الصنف</th><th>سعر</th><th>ع</th><th>إجمالي</th></tr></thead>
+        <tbody id="p_items"></tbody>
+    </table>
+    <div class="r-total-sec" style="display: block;">
+        <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;">
+            <span>الإجمالي:</span><span><span id="p_subtotal">0</span> ج</span>
+        </div>
+        <div id="p_discount_row" style="display: none; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px;">
+            <span>خصم للحبايب:</span><span>-<span id="p_discount_val">0</span> ج</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; border-top: 2px dashed #000; margin-top: 5px; padding-top: 5px;">
+            <span>المطلوب:</span><span><span id="p_total">0</span> ج</span>
+        </div>
+        <div id="r_loyalty_sec" style="display:none; text-align:center; border-top:1px dashed #000; margin-top:5px; padding-top:5px;">
+            <b style="font-size:14px;">نقاطك الحالية: <span id="r_loyalty_points">0</span> ⭐</b><br>
+            <span style="font-size:11px;">شكراً لثقتك في نيو كافيه، جمع نقاط واستمتع بهداياك! 🎁</span>
+        </div>
+        <div style="text-align:center; font-size:12px; margin-top:5px; border-top:1px dotted #000;">طريقة الدفع: <span id="p_method"></span></div>
+    </div>
+    <div class="r-footer">
+        <span class="welcome-text">نورتنا يا رايق ❤️</span>
+        <span class="powered-by">Powered by: Neo Cafe</span>
+    </div>
+</div>
+<script>
 /* ================== Data Base (Local + Firebase) ================== */
 const DB = {
     keys: {inv:'neo_inv_v2',exp:'neo_exp_v2',sales:'neo_sales_v2',recipes:'neo_recipes_v2',tables:'neo_tables_v6',staff:'neo_staff_v1',debts:'neo_debts_v1',hospitality:'neo_host_v1',kitchen:'neo_kitchen_v1', loyalty:'neo_loyalty_v1', vault:'neo_vault_v1', fixed_costs:'neo_fixed_costs_v1', suppliers:'neo_suppliers_v1'},
@@ -1558,6 +1603,9 @@ function executeZReport() {
     // 4. طباعة إيصال التقفيل (Z-Report) المظبوط للماكينة
     if(confirm('تم التقفيل والحفظ في الأرشيف بنجاح ✅\n\nهل تريد طباعة إيصال التقفيل (Z-Report)؟')) {
         let printWindow = window.open('', '_blank', 'width=350,height=600');
+        let invCounter = parseInt(localStorage.getItem('neo_receipt_num')) || 999;
+    invCounter++;
+    localStorage.setItem('neo_receipt_num', invCounter);
         printWindow.document.write(`
             <html dir="rtl">
             <head>
@@ -1601,4 +1649,43 @@ function executeZReport() {
         }, 500);
     }
 }
+/* ================== الموتور الذكي لضبط الفاتورة قبل الطباعة ================== */
+let originalWindowPrint = window.print;
+window.print = function() {
+    // 1. تظبيط الخصم (لو مفيش خصم يخفي السطر، لو فيه خصم يظهره بكلمة خصم للحبايب)
+    let discValSpan = document.getElementById('p_discount_val');
+    let discRow = document.getElementById('p_discount_row');
+    if(discValSpan && discRow) {
+        let discVal = parseFloat(discValSpan.innerText) || 0;
+        if(discVal > 0) {
+            discRow.style.display = 'flex';
+        } else {
+            discRow.style.display = 'none';
+        }
+    }
+
+    // 2. تظبيط رقم الفاتورة التسلسلي (يبدأ من 1000)
+    let idSpan = document.getElementById('p_id');
+    if(idSpan && idSpan.innerText) {
+        // هنجيب آخر رقم تسلسلي متسجل، لو مفيش هنبدأ من 999 عشان أول واحد يبقى 1000
+        let currentInvNum = parseInt(localStorage.getItem('neo_real_receipt_num')) || 999;
+        let lastRandomId = localStorage.getItem('neo_last_random_id');
+        
+        // السيستم عندك بيعمل رقم عشوائي مكون من 6 أرقام أو أكتر، لو الرقم ده اتغير يعني ده أوردر جديد بجد
+        let rawId = idSpan.innerText;
+        if(rawId.length >= 5 && rawId !== lastRandomId) {
+            currentInvNum++; // زوّد العداد
+            localStorage.setItem('neo_real_receipt_num', currentInvNum); // احفظ الرقم الجديد
+            localStorage.setItem('neo_last_random_id', rawId); // احفظ الكود العشوائي عشان منزودش عليه تاني
+        }
+        
+        // اعرض الرقم التسلسلي النضيف في الفاتورة
+        if(rawId.length >= 5) {
+            idSpan.innerText = currentInvNum;
+        }
+    }
+
+    // نفذ أمر الطباعة الطبيعي بعد ما الشاشة اتظبطت
+    originalWindowPrint.apply(this, arguments);
+};
 </script>
