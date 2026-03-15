@@ -630,6 +630,14 @@
         #receipt-area { margin-top: 0 !important; padding-top: 5px !important; padding-bottom: 50px !important; }
     }
 </style>
+<style>
+    @media print {
+        @page { margin: 0 !important; size: auto; }
+        body { margin: 0 !important; padding: 0 !important; }
+        /* سحب الفاتورة لفوق لتقليل البياض، وزيادة المساحة تحت لتوسيطها مع مقص الطابعة */
+        #receipt-area { margin-top: -15px !important; padding-top: 0 !important; padding-bottom: 70px !important; }
+    }
+</style>
 <div id="receipt-area">
     <div class="r-header">
         <img src="assets/images/logo.png" alt="NEO" onerror="this.style.display='none'">
@@ -659,9 +667,15 @@
         <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 3px; color: #2c3e50;">
             <span>الخدمة (Service):</span><span>0 ج</span>
         </div>
+
         <div id="p_discount_row" style="display: none; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 6px;">
             <span>خصم للحبايب:</span><span>-<span id="p_discount_val">0</span> ج</span>
         </div>
+        
+        <div id="p_note_row" style="display: none; font-size: 14px; text-align: right; border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px;">
+            <span style="font-weight:bold;">ملاحظات:</span> <span id="p_note_val"></span>
+        </div>
+
         <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; border-top: 2px dashed #000; margin-top: 6px; padding-top: 6px;">
             <span>المطلوب:</span><span><span id="p_total">0</span> ج</span>
         </div>
@@ -1665,43 +1679,152 @@ function executeZReport() {
         }, 500);
     }
 }
-/* ================== الموتور الذكي لضبط الفاتورة قبل الطباعة ================== */
-let originalWindowPrint = window.print;
+/* ================== الموتور الشامل (القهوة + الملاحظات + الطباعة) ================== */
+// 1. حقن حقل الملاحظات في الكاشير أوتوماتيك تحت الخصم
+setTimeout(() => {
+    let discountInputs = document.querySelectorAll('input[type="number"]');
+    let targetInput = Array.from(discountInputs).find(input => input.placeholder && input.placeholder.includes('خصم') || input.id && input.id.includes('discount') || (input.parentElement && input.parentElement.innerText.includes('الخصم')));
+    if(targetInput && !document.getElementById('orderNoteInput')) {
+        let noteDiv = document.createElement('div');
+        noteDiv.style.cssText = "display:flex; align-items:center; margin-top:10px; border-top:1px solid #ddd; padding-top:10px; width:100%;";
+        noteDiv.innerHTML = `<label style="width:80px; font-weight:bold; color:#e74c3c;">ملاحظات:</label><input type="text" id="orderNoteInput" class="form-control" placeholder="تيك أواي، بدون سكر، صالة..." style="flex:1; border:1px solid #e74c3c;">`;
+        targetInput.parentElement.insertAdjacentElement('afterend', noteDiv);
+    }
+}, 1500);
+
+// 2. شاشة خيارات القهوة (مودال سحري)
+(function injectCoffeeModal() {
+    if(document.getElementById('modal_coffee_options')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+    <div id="modal_coffee_options" class="modal" style="z-index:99999; background: rgba(0,0,0,0.7);">
+        <div class="modal-content" style="max-width:350px; text-align:center; padding:20px; border-radius:15px;">
+            <h3 style="color:var(--primary); margin-bottom:10px;"><i class="fas fa-mug-hot"></i> تظبيط القهوة</h3>
+            <h4 id="coffee_item_name" style="color:#e74c3c; margin-bottom:15px; font-weight:bold;"></h4>
+
+            <div id="blend_section" style="margin-bottom:15px; text-align:right;">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">التحويجة:</label>
+                <select id="coffee_blend" class="form-control" style="width:100%; font-size:16px; border:2px solid #ddd; padding:8px; border-radius:8px;">
+                    <option value="سادة">سادة</option>
+                    <option value="محوج">محوج</option>
+                    <option value="فاتح">فاتح</option>
+                    <option value="غامق">غامق</option>
+                    <option value="وسط">وسط</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom:20px; text-align:right;">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">السكر:</label>
+                <select id="coffee_sugar" class="form-control" style="width:100%; font-size:16px; border:2px solid #ddd; padding:8px; border-radius:8px;">
+                    <option value="مظبوط" selected>مظبوط</option>
+                    <option value="زيادة">زيادة</option>
+                    <option value="ع الريحة">ع الريحة</option>
+                    <option value="سادة">سادة</option>
+                    <option value="مانو">مانو</option>
+                </select>
+            </div>
+
+            <button class="btn-action" onclick="confirmCoffeeOptions()" style="width:100%; font-size:16px; margin-bottom:10px;"><i class="fas fa-plus"></i> إضافة للأوردر</button>
+            <button class="btn-action" onclick="document.getElementById('modal_coffee_options').style.display='none';" style="width:100%; background:#95a5a6; font-size:16px;"><i class="fas fa-times"></i> بدون إضافات</button>
+        </div>
+    </div>
+    `);
+})();
+
+let pendingCoffeeArgs = null;
+let originalAddToCart = null;
+setTimeout(() => {
+    if(typeof window.addToCart === 'function') {
+        originalAddToCart = window.addToCart;
+        window.addToCart = function() {
+            let argsArray = Array.from(arguments);
+            let name = '';
+            let nameIndex = -1;
+            
+            for(let i=0; i<argsArray.length; i++) {
+                let arg = argsArray[i];
+                if(typeof arg === 'string' && (arg.includes('قهوة') || arg.includes('اسبريسو') || arg.includes('بندق') || arg.includes('فرنساوي') || arg.includes('تركي'))) {
+                    name = arg; nameIndex = i; break;
+                } else if (arg && typeof arg === 'object' && arg.name && (arg.name.includes('قهوة') || arg.name.includes('اسبريسو') || arg.name.includes('بندق') || arg.name.includes('فرنساوي') || arg.name.includes('تركي'))) {
+                    name = arg.name; nameIndex = i; break;
+                }
+            }
+
+            if(name !== '') {
+                pendingCoffeeArgs = { args: argsArray, index: nameIndex, originalName: name };
+                let isFrench = name.includes('فرنساوي') || name.includes('بندق');
+                
+                document.getElementById('coffee_item_name').innerText = name;
+                document.getElementById('blend_section').style.display = isFrench ? 'none' : 'block';
+                
+                document.getElementById('coffee_blend').value = 'سادة';
+                document.getElementById('coffee_sugar').value = 'مظبوط';
+                
+                document.getElementById('modal_coffee_options').style.display = 'flex';
+            } else {
+                originalAddToCart.apply(this, argsArray);
+            }
+        };
+        
+        window.confirmCoffeeOptions = function() {
+            if(!pendingCoffeeArgs) return;
+            let blend = document.getElementById('coffee_blend').value;
+            let sugar = document.getElementById('coffee_sugar').value;
+            let isFrench = pendingCoffeeArgs.originalName.includes('فرنساوي') || pendingCoffeeArgs.originalName.includes('بندق');
+            
+            let extraText = isFrench ? ` (سكر ${sugar})` : ` (${blend}-سكر ${sugar})`;
+            let newName = pendingCoffeeArgs.originalName + extraText;
+            
+            if(typeof pendingCoffeeArgs.args[pendingCoffeeArgs.index] === 'object') {
+                pendingCoffeeArgs.args[pendingCoffeeArgs.index].name = newName;
+            } else {
+                pendingCoffeeArgs.args[pendingCoffeeArgs.index] = newName;
+            }
+            
+            document.getElementById('modal_coffee_options').style.display = 'none';
+            originalAddToCart.apply(window, pendingCoffeeArgs.args);
+            pendingCoffeeArgs = null;
+        };
+    }
+}, 1500);
+
+// 3. تعديل دالة الطباعة (توسيط + ملاحظات + خصم + رقم تسلسلي)
+let originalWindowPrint2 = window.print;
 window.print = function() {
-    // 1. تظبيط الخصم (لو مفيش خصم يخفي السطر، لو فيه خصم يظهره بكلمة خصم للحبايب)
+    let noteInput = document.getElementById('orderNoteInput');
+    let noteRow = document.getElementById('p_note_row');
+    let noteVal = document.getElementById('p_note_val');
+    
+    if(noteRow && noteVal && noteInput) {
+        if(noteInput.value.trim() !== '') {
+            noteVal.innerText = noteInput.value;
+            noteRow.style.display = 'block';
+        } else {
+            noteRow.style.display = 'none';
+        }
+    }
+    
     let discValSpan = document.getElementById('p_discount_val');
     let discRow = document.getElementById('p_discount_row');
     if(discValSpan && discRow) {
         let discVal = parseFloat(discValSpan.innerText) || 0;
-        if(discVal > 0) {
-            discRow.style.display = 'flex';
-        } else {
-            discRow.style.display = 'none';
-        }
+        discRow.style.display = discVal > 0 ? 'flex' : 'none';
     }
 
-    // 2. تظبيط رقم الفاتورة التسلسلي (يبدأ من 1000)
     let idSpan = document.getElementById('p_id');
     if(idSpan && idSpan.innerText) {
-        // هنجيب آخر رقم تسلسلي متسجل، لو مفيش هنبدأ من 999 عشان أول واحد يبقى 1000
         let currentInvNum = parseInt(localStorage.getItem('neo_real_receipt_num')) || 999;
         let lastRandomId = localStorage.getItem('neo_last_random_id');
-        
-        // السيستم عندك بيعمل رقم عشوائي مكون من 6 أرقام أو أكتر، لو الرقم ده اتغير يعني ده أوردر جديد بجد
         let rawId = idSpan.innerText;
         if(rawId.length >= 5 && rawId !== lastRandomId) {
-            currentInvNum++; // زوّد العداد
-            localStorage.setItem('neo_real_receipt_num', currentInvNum); // احفظ الرقم الجديد
-            localStorage.setItem('neo_last_random_id', rawId); // احفظ الكود العشوائي عشان منزودش عليه تاني
+            currentInvNum++;
+            localStorage.setItem('neo_real_receipt_num', currentInvNum);
+            localStorage.setItem('neo_last_random_id', rawId);
         }
-        
-        // اعرض الرقم التسلسلي النضيف في الفاتورة
-        if(rawId.length >= 5) {
-            idSpan.innerText = currentInvNum;
-        }
+        if(rawId.length >= 5) idSpan.innerText = currentInvNum;
     }
 
-    // نفذ أمر الطباعة الطبيعي بعد ما الشاشة اتظبطت
-    originalWindowPrint.apply(this, arguments);
+    originalWindowPrint2.apply(this, arguments);
+    
+    if(noteInput) noteInput.value = ''; // تصفير الملاحظات للأوردر اللي بعده أوتوماتيك
 };
 </script>
