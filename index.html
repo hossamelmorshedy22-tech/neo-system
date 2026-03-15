@@ -1679,5 +1679,58 @@ function executeZReport() {
         }, 500);
     }
 }
-/* ================== الموتور الشامل (القهوة + الملاحظات + الطباعة)
+/* ================== الموتور الشامل (الملاحظات + الطباعة فقط) ================== */
+
+// 1. حقن حقل الملاحظات في الكاشير أوتوماتيك تحت الخصم
+setTimeout(() => {
+    let discountInputs = document.querySelectorAll('input[type="number"]');
+    let targetInput = Array.from(discountInputs).find(input => input.placeholder && input.placeholder.includes('خصم') || input.id && input.id.includes('discount') || (input.parentElement && input.parentElement.innerText.includes('الخصم')));
+    if(targetInput && !document.getElementById('orderNoteInput')) {
+        let noteDiv = document.createElement('div');
+        noteDiv.style.cssText = "display:flex; align-items:center; margin-top:10px; border-top:1px solid #ddd; padding-top:10px; width:100%;";
+        noteDiv.innerHTML = `<label style="width:80px; font-weight:bold; color:#e74c3c;">ملاحظات:</label><input type="text" id="orderNoteInput" class="form-control" placeholder="تيك أواي، بدون سكر، صالة..." style="flex:1; border:1px solid #e74c3c;">`;
+        targetInput.parentElement.insertAdjacentElement('afterend', noteDiv);
+    }
+}, 1500);
+
+// 2. تعديل دالة الطباعة (توسيط + ملاحظات + خصم + رقم تسلسلي)
+let originalWindowPrint2 = window.print;
+window.print = function() {
+    let noteInput = document.getElementById('orderNoteInput');
+    let noteRow = document.getElementById('p_note_row');
+    let noteVal = document.getElementById('p_note_val');
+    
+    if(noteRow && noteVal && noteInput) {
+        if(noteInput.value.trim() !== '') {
+            noteVal.innerText = noteInput.value;
+            noteRow.style.display = 'block';
+        } else {
+            noteRow.style.display = 'none';
+        }
+    }
+    
+    let discValSpan = document.getElementById('p_discount_val');
+    let discRow = document.getElementById('p_discount_row');
+    if(discValSpan && discRow) {
+        let discVal = parseFloat(discValSpan.innerText) || 0;
+        discRow.style.display = discVal > 0 ? 'flex' : 'none';
+    }
+
+    let idSpan = document.getElementById('p_id');
+    if(idSpan && idSpan.innerText) {
+        let currentInvNum = parseInt(localStorage.getItem('neo_real_receipt_num')) || 999;
+        let lastRandomId = localStorage.getItem('neo_last_random_id');
+        let rawId = idSpan.innerText;
+        if(rawId.length >= 5 && rawId !== lastRandomId) {
+            currentInvNum++;
+            localStorage.setItem('neo_real_receipt_num', currentInvNum);
+            localStorage.setItem('neo_last_random_id', rawId);
+        }
+        if(rawId.length >= 5) idSpan.innerText = currentInvNum;
+    }
+
+    originalWindowPrint2.apply(this, arguments);
+    
+    if(noteInput) noteInput.value = ''; // تصفير الملاحظات للأوردر اللي بعده أوتوماتيك
+};
 </script>
