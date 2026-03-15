@@ -618,7 +618,16 @@
     @media print {
         @page { margin: 0 !important; }
         body { margin: 0 !important; padding: 0 !important; }
-        #receipt-area { margin-top: 0 !important; padding-top: 5px !important; }
+        /* padding-bottom: 50px هي المساحة الفاضية اللي هنسيبها من تحت عشان تعادل اللي فوق */
+        #receipt-area { margin-top: 0 !important; padding-top: 5px !important; padding-bottom: 50px !important; }
+    }
+</style>
+<style>
+    @media print {
+        @page { margin: 0 !important; }
+        body { margin: 0 !important; padding: 0 !important; }
+        /* padding-bottom: 50px هي المساحة الفاضية اللي هنسيبها من تحت عشان تعادل اللي فوق */
+        #receipt-area { margin-top: 0 !important; padding-top: 5px !important; padding-bottom: 50px !important; }
     }
 </style>
 <div id="receipt-area">
@@ -643,10 +652,17 @@
         <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;">
             <span>الإجمالي:</span><span><span id="p_subtotal">0</span> ج</span>
         </div>
-        <div id="p_discount_row" style="display: none; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px;">
+        
+        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 6px; color: #2c3e50;">
+            <span>الضريبة (Tax):</span><span>0 ج</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 3px; color: #2c3e50;">
+            <span>الخدمة (Service):</span><span>0 ج</span>
+        </div>
+        <div id="p_discount_row" style="display: none; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 6px;">
             <span>خصم للحبايب:</span><span>-<span id="p_discount_val">0</span> ج</span>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; border-top: 2px dashed #000; margin-top: 5px; padding-top: 5px;">
+        <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; border-top: 2px dashed #000; margin-top: 6px; padding-top: 6px;">
             <span>المطلوب:</span><span><span id="p_total">0</span> ج</span>
         </div>
         <div id="r_loyalty_sec" style="display:none; text-align:center; border-top:1px dashed #000; margin-top:5px; padding-top:5px;">
