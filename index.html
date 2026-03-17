@@ -616,10 +616,10 @@
 
 <style>
     @media print {
-        @page { margin: 0 !important; }
+        @page { margin: 0 !important; size: auto; }
         body { margin: 0 !important; padding: 0 !important; }
-        /* padding-bottom: 50px هي المساحة الفاضية اللي هنسيبها من تحت عشان تعادل اللي فوق */
-        #receipt-area { margin-top: 0 !important; padding-top: 5px !important; padding-bottom: 50px !important; }
+        /* زودنا السحب لفوق لـ -40 بكسل عشان نمسح البياض تماماً */
+        #receipt-area { margin-top: -40px !important; padding-top: 0 !important; padding-bottom: 70px !important; }
     }
 </style>
 <style>
@@ -1582,23 +1582,48 @@ function deleteArchiveRecord(index) {
         renderFinance();
     }
 }
-/* ================== الموتور الإجباري لتقفيل اليومية (Z-Report) ================== */
-// السكريبت ده بيدور على زرار التقفيل ويشغله بالعافية على النظام الجديد ويفصل القديم تماماً
+/* ================== الموتور الإجباري لتقفيل اليومية (Z-Report) - النسخة الفخمة ================== */
+
+// 1. حقن رسالة التنبيه الشيك (عشان نلغي رسالة المتصفح البدائية)
+(function injectZReportModal() {
+    if(document.getElementById('modal_z_report')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+    <div id="modal_z_report" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999999; justify-content:center; align-items:center; backdrop-filter: blur(3px);">
+        <div style="background:#fff; width:90%; max-width:400px; padding:30px 20px; border-radius:20px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.3);">
+            <div style="background:#fdf2f2; width:80px; height:80px; border-radius:50%; display:flex; justify-content:center; align-items:center; margin:0 auto 15px;">
+                <i class="fas fa-lock" style="font-size:35px; color:#e74c3c;"></i>
+            </div>
+            <h2 style="color:#e74c3c; margin-bottom:10px; font-weight:900; font-family:'Cairo', sans-serif;">تقفيل اليومية</h2>
+            <p style="font-weight:bold; margin-bottom:25px; color:#333; font-size:15px; font-family:'Cairo', sans-serif;">
+                هل أنت متأكد من تقفيل الوردية؟<br>
+                <span style="color:#7f8c8d; font-size:13px; font-weight:normal;">سيتم حفظ البيانات في الأرشيف وتصفير المبيعات الحالية.</span>
+            </p>
+            <div style="display:flex; gap:10px;">
+                <button onclick="executeZReport()" style="flex:1; background:var(--primary, #27ae60); color:#fff; border:none; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; font-family:'Cairo', sans-serif;"><i class="fas fa-check"></i> تأكيد وطباعة</button>
+                <button onclick="document.getElementById('modal_z_report').style.display='none'" style="flex:1; background:#95a5a6; color:#fff; border:none; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; font-family:'Cairo', sans-serif;"><i class="fas fa-times"></i> تراجع</button>
+            </div>
+        </div>
+    </div>
+    `);
+})();
+
+// 2. ربط زرار التقفيل بالشاشة الشيك
 setTimeout(function() {
     let allElements = document.querySelectorAll('.nav-btn, button, a, li');
     allElements.forEach(el => {
         if (el.innerText && el.innerText.includes('تقفيل اليومية')) {
-            el.onclick = null; // بمسح أي كود قديم من عليه
+            el.onclick = null; 
             el.addEventListener('click', function(e) {
                 e.preventDefault();
-                executeZReport();
+                document.getElementById('modal_z_report').style.display = 'flex';
             });
         }
     });
 }, 1500);
 
+// 3. التنفيذ والطباعة بنفس ستايل الفاتورة الأصلية
 function executeZReport() {
-    if(!confirm('⚠️ تحذير: هل أنت متأكد من تقفيل الوردية وتصفير المبيعات الحالية؟')) return;
+    document.getElementById('modal_z_report').style.display = 'none'; // نقفل الشاشة
 
     let sales = JSON.parse(localStorage.getItem('neo_sales_v2')) || [];
     let exps = JSON.parse(localStorage.getItem('neo_exp_v2')) || [];
@@ -1607,7 +1632,7 @@ function executeZReport() {
     let totalExp = exps.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
     let netCash = totalSales - totalExp;
 
-    // 1. الحفظ الإجباري في الأرشيف
+    // الحفظ في الأرشيف
     let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
     archive.push({
         date: new Date().toLocaleString('ar-EG'),
@@ -1618,7 +1643,7 @@ function executeZReport() {
     localStorage.setItem('neo_archive_v1', JSON.stringify(archive));
     try { database.ref('NeoCafe/neo_archive_v1').set(archive); } catch(e){}
 
-    // 2. تصفير الوردية الحالية
+    // تصفير الوردية الحالية
     localStorage.setItem('neo_sales_v2', JSON.stringify([]));
     localStorage.setItem('neo_exp_v2', JSON.stringify([]));
     try { 
@@ -1626,111 +1651,64 @@ function executeZReport() {
         database.ref('NeoCafe/neo_exp_v2').set([]); 
     } catch(e){}
 
-    // 3. تحديث الشاشات
     if(typeof updateDashboard === 'function') updateDashboard();
     if(typeof renderFinance === 'function') renderFinance();
 
-    // 4. طباعة إيصال التقفيل (Z-Report) المظبوط للماكينة
-    if(confirm('تم التقفيل والحفظ في الأرشيف بنجاح ✅\n\nهل تريد طباعة إيصال التقفيل (Z-Report)؟')) {
-        let printWindow = window.open('', '_blank', 'width=350,height=600');
-        let invCounter = parseInt(localStorage.getItem('neo_receipt_num')) || 999;
-    invCounter++;
-    localStorage.setItem('neo_receipt_num', invCounter);
-        printWindow.document.write(`
-            <html dir="rtl">
-            <head>
-                <title>Z-Report NEO CAFE</title>
-                <style>
-                    body { font-family: 'Courier New', Courier, monospace; text-align: center; padding: 10px; color: #000; margin: 0; }
-                    h2 { margin: 5px 0; font-size: 24px; font-weight: bold; }
-                    h3 { margin: 5px 0; font-size: 18px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
-                    p { margin: 5px 0; font-size: 14px; font-weight: bold; }
-                    .line { border-top: 1px dashed #000; margin: 15px 0; }
-                    .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin: 10px 0; }
-                    .net-cash { font-size: 20px; font-weight: bold; border: 2px solid #000; padding: 10px; margin-top: 15px; }
-                </style>
-            </head>
-            <body>
-                <h2>NEO CAFE</h2>
-                <h3>تقرير التقفيل (Z-Report)</h3>
-                <p>التاريخ: ${new Date().toLocaleString('ar-EG')}</p>
-                <div class="line"></div>
+    // طباعة إيصال التقفيل بنفس الستايل المظبوط
+    let printWindow = window.open('', '_blank', 'width=350,height=600');
+    printWindow.document.write(`
+        <html dir="rtl">
+        <head>
+            <title>Z-Report NEO CAFE</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+            <style>
+                @media print {
+                    @page { margin: 0 !important; size: auto; }
+                    body { margin: 0 !important; padding: 0 !important; }
+                    #receipt-area { margin-top: -40px !important; padding-bottom: 70px !important; }
+                }
+                body { font-family: 'Cairo', sans-serif; text-align: center; color: #000; background: #fff; margin:0; padding:10px; }
+                .r-header img { width: 60px; margin-bottom: 5px; }
+                .r-header h2 { margin: 0; font-size: 22px; font-weight: 900; }
+                .r-slogan { border: 1px dashed #000; padding: 3px 10px; font-size: 13px; font-weight: bold; border-radius: 10px; display: inline-block; margin: 5px 0 15px; }
+                .r-meta { border-bottom: 2px dashed #000; padding-bottom: 5px; margin-bottom: 10px; font-size: 14px; font-weight: bold; }
+                .r-meta div { margin-bottom: 5px; display:flex; justify-content:space-between; }
+                .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin: 10px 0; border-bottom: 1px dotted #ccc; padding-bottom:5px; }
+                .net-cash { display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; border-top: 2px dashed #000; margin-top: 10px; padding-top: 10px; }
+            </style>
+        </head>
+        <body>
+            <div id="receipt-area">
+                <div class="r-header">
+                    <img src="assets/images/logo.png" alt="NEO" onerror="this.style.display='none'">
+                    <h2>NEO Café</h2>
+                    <div class="r-slogan">✨ تقرير تقفيل اليومية (Z-Report) ✨</div>
+                </div>
+                <div class="r-meta">
+                    <div><span>التاريخ:</span> <span>${new Date().toLocaleDateString('ar-EG')}</span></div>
+                    <div><span>الوقت:</span> <span>${new Date().toLocaleTimeString('ar-EG')}</span></div>
+                    <div><span>الكاشير:</span> <span>Admin</span></div>
+                </div>
                 
                 <div class="total-row"><span>إجمالي المبيعات:</span> <span>${totalSales.toLocaleString()} ج</span></div>
-                <div class="total-row"><span>إجمالي المصروفات:</span> <span>${totalExp.toLocaleString()} ج</span></div>
+                <div class="total-row"><span>إجمالي المصروفات:</span> <span style="color:#e74c3c;">${totalExp.toLocaleString()} ج</span></div>
                 
-                <div class="net-cash">الصافي بالدرج: ${netCash.toLocaleString()} ج</div>
+                <div class="net-cash"><span>الصافي بالدرج:</span> <span>${netCash.toLocaleString()} ج</span></div>
                 
-                <br><br>
-                <p style="text-align: right;">توقيع الكاشير: .................</p>
-                <p style="text-align: right;">توقيع المدير: .................</p>
                 <br>
-                <p style="font-size: 10px;">تم إصدار التقرير بواسطة نظام NEO ERP</p>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        
-        // بنستنى نص ثانية عشان الشاشة ترسم الوصل قبل الطباعة
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 500);
-    }
+                <div style="display:flex; justify-content: space-between; font-size:12px; font-weight:bold; margin-top:15px;">
+                    <span>توقيع الكاشير: ...............</span>
+                    <span>توقيع المدير: ...............</span>
+                </div>
+                <div style="font-size:11px; margin-top:15px; border-top:1px dotted #000; padding-top:5px; font-weight:bold;">Powered by: Neo Cafe</div>
+            </div>
+            <script>
+                setTimeout(() => { window.print(); window.close(); }, 500);
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
 }
-/* ================== الموتور الشامل (الملاحظات + الطباعة فقط) ================== */
-
-// 1. حقن حقل الملاحظات في الكاشير أوتوماتيك تحت الخصم
-setTimeout(() => {
-    let discountInputs = document.querySelectorAll('input[type="number"]');
-    let targetInput = Array.from(discountInputs).find(input => input.placeholder && input.placeholder.includes('خصم') || input.id && input.id.includes('discount') || (input.parentElement && input.parentElement.innerText.includes('الخصم')));
-    if(targetInput && !document.getElementById('orderNoteInput')) {
-        let noteDiv = document.createElement('div');
-        noteDiv.style.cssText = "display:flex; align-items:center; margin-top:10px; border-top:1px solid #ddd; padding-top:10px; width:100%;";
-        noteDiv.innerHTML = `<label style="width:80px; font-weight:bold; color:#e74c3c;">ملاحظات:</label><input type="text" id="orderNoteInput" class="form-control" placeholder="تيك أواي، بدون سكر، صالة..." style="flex:1; border:1px solid #e74c3c;">`;
-        targetInput.parentElement.insertAdjacentElement('afterend', noteDiv);
-    }
-}, 1500);
-
-// 2. تعديل دالة الطباعة (توسيط + ملاحظات + خصم + رقم تسلسلي)
-let originalWindowPrint2 = window.print;
-window.print = function() {
-    let noteInput = document.getElementById('orderNoteInput');
-    let noteRow = document.getElementById('p_note_row');
-    let noteVal = document.getElementById('p_note_val');
-    
-    if(noteRow && noteVal && noteInput) {
-        if(noteInput.value.trim() !== '') {
-            noteVal.innerText = noteInput.value;
-            noteRow.style.display = 'block';
-        } else {
-            noteRow.style.display = 'none';
-        }
-    }
-    
-    let discValSpan = document.getElementById('p_discount_val');
-    let discRow = document.getElementById('p_discount_row');
-    if(discValSpan && discRow) {
-        let discVal = parseFloat(discValSpan.innerText) || 0;
-        discRow.style.display = discVal > 0 ? 'flex' : 'none';
-    }
-
-    let idSpan = document.getElementById('p_id');
-    if(idSpan && idSpan.innerText) {
-        let currentInvNum = parseInt(localStorage.getItem('neo_real_receipt_num')) || 999;
-        let lastRandomId = localStorage.getItem('neo_last_random_id');
-        let rawId = idSpan.innerText;
-        if(rawId.length >= 5 && rawId !== lastRandomId) {
-            currentInvNum++;
-            localStorage.setItem('neo_real_receipt_num', currentInvNum);
-            localStorage.setItem('neo_last_random_id', rawId);
-        }
-        if(rawId.length >= 5) idSpan.innerText = currentInvNum;
-    }
-
-    originalWindowPrint2.apply(this, arguments);
-    
-    if(noteInput) noteInput.value = ''; // تصفير الملاحظات للأوردر اللي بعده أوتوماتيك
-};
 </script>
