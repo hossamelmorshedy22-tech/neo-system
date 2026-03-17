@@ -214,7 +214,6 @@
             .sidebar, .main-content, .modal, .cloud-status { display: none !important; }
             #receipt-area, #receipt-area * { visibility: visible; }
             #receipt-area { display: block !important; position: absolute; left: 0; top: 0; right: 0; width: 72mm; margin: 0 auto; padding: 2mm 4mm; color: #000; font-family: 'Cairo', sans-serif; direction: rtl; }
-            /* الكود السحري لسحب الفاتورة لفوق وتقليل البياض لأقصى حد */
             #receipt-area { margin-top: -40px !important; padding-top: 0 !important; padding-bottom: 70px !important; }
             
             .r-header { text-align: center; margin-bottom: 5px; border-bottom: 1px dashed #000; padding-bottom: 5px; }
@@ -333,6 +332,8 @@
                                     <span id="cartTotal" style="font-weight: 900; font-size: 20px; color: var(--success);">0.00 ج</span>
                                 </div>
                                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                                    <button onclick="openSplitModal()" style="width: 75px; height: 75px; background: #8e44ad; color: white; border: none; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;"><i class="fas fa-cut" style="font-size: 22px; margin-bottom: 6px;"></i><span style="font-size: 12px; font-weight: bold;">تقسيم</span></button>
+                                    
                                     <button onclick="showInvoiceModal()" style="width: 75px; height: 75px; background: var(--secondary); color: white; border: none; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;"><i class="fas fa-check" style="font-size: 22px; margin-bottom: 6px;"></i><span style="font-size: 12px; font-weight: bold;">دفع فقط</span></button>
                                     <button onclick="processCheckout('cash', true)" style="width: 75px; height: 75px; background: var(--success); color: white; border: none; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;"><i class="fas fa-print" style="font-size: 22px; margin-bottom: 6px;"></i><span style="font-size: 12px; font-weight: bold;">طباعة</span></button>
                                 </div>
@@ -535,8 +536,7 @@
                     <button onclick="logout()" style="background:#c0392b; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:bold;"><i class="fas fa-sign-out-alt"></i> خروج</button>
                 </div>
             </div>
-            <div id="kitchenOrders" class="kds-grid">
-                </div>
+            <div id="kitchenOrders" class="kds-grid"></div>
         </div>
 
         <div id="debts" class="page">
@@ -581,41 +581,8 @@
 
     </div>
 
-    <div id="modal_inv" class="modal">
-        <div class="modal-content">
-            <button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
-            <h3>إضافة صنف جديد للمخزن</h3>
-            <input type="text" id="new_inv_name" placeholder="اسم الصنف (مثال: بن محوج...)" class="form-control">
-            <select id="new_inv_type" class="form-control">
-                <option value="raw">خامات تصنيع (بن، صوصات...)</option>
-                <option value="consumables">مستهلكات وورقيات (كوبايات، مناديل...)</option>
-                <option value="dessert">ديزيرت</option>
-                <option value="soft">سوفت درينك</option>
-                <option value="water">مياه</option>
-                <option value="other">أخرى</option>
-            </select>
-            <div style="display:flex; gap:10px">
-                <input type="number" id="new_inv_qty" placeholder="الكمية الإجمالية" class="form-control">
-                <select id="new_inv_unit" class="form-control"><option value="gram">جرام</option><option value="ml">ملّي</option><option value="piece">قطعة</option><option value="kg">كيلو</option><option value="bottle">زجاجة</option><option value="box">علبة</option><option value="carton">كرتونة</option></select>
-            </div>
-            <input type="number" id="new_inv_min_alert" placeholder="حد التنبيه (مثال: ينبهك لو قل عن 5)" class="form-control" style="border-color:var(--danger)">
-            
-            <input type="number" id="new_inv_cost" placeholder="التكلفة الإجمالية للكمية (بالجنيه)" class="form-control">
-            <button class="btn-action" onclick="saveInventory()" style="width:100%;"><i class="fas fa-save"></i> حفظ الصنف</button>
-        </div>
-    </div>
-
-    <div id="modal_whatsapp" class="modal">
-        <div class="modal-content" style="text-align:center;">
-            <button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
-            <h3 style="color:var(--whatsapp);"><i class="fab fa-whatsapp"></i> إرسال رسالة للإدارة</h3>
-            <p style="margin-bottom:20px; font-size:14px; color:#555; font-weight:bold;">اختر الرقم اللي حابب تبعتله التقرير أو الإنذار:</p>
-            <input type="hidden" id="waMessageContent">
-            <button class="btn-action" style="width:100%; background:#128C7E; margin-bottom:10px; font-size:16px;" onclick="executeWhatsApp('201067876987')">إرسال للرقم الأول (01067876987) <i class="fas fa-paper-plane"></i></button>
-            <button class="btn-action" style="width:100%; background:#075E54; font-size:16px;" onclick="executeWhatsApp('201066709180')">إرسال للرقم الثاني (01066709180) <i class="fas fa-paper-plane"></i></button>
-        </div>
-    </div>
-
+    <div id="modal_inv" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>إضافة صنف جديد للمخزن</h3><input type="text" id="new_inv_name" placeholder="اسم الصنف (مثال: بن محوج...)" class="form-control"><select id="new_inv_type" class="form-control"><option value="raw">خامات تصنيع (بن، صوصات...)</option><option value="consumables">مستهلكات وورقيات (كوبايات، مناديل...)</option><option value="dessert">ديزيرت</option><option value="soft">سوفت درينك</option><option value="water">مياه</option><option value="other">أخرى</option></select><div style="display:flex; gap:10px"><input type="number" id="new_inv_qty" placeholder="الكمية الإجمالية" class="form-control"><select id="new_inv_unit" class="form-control"><option value="gram">جرام</option><option value="ml">ملّي</option><option value="piece">قطعة</option><option value="kg">كيلو</option><option value="bottle">زجاجة</option><option value="box">علبة</option><option value="carton">كرتونة</option></select></div><input type="number" id="new_inv_min_alert" placeholder="حد التنبيه (مثال: ينبهك لو قل عن 5)" class="form-control" style="border-color:var(--danger)"><input type="number" id="new_inv_cost" placeholder="التكلفة الإجمالية للكمية (بالجنيه)" class="form-control"><button class="btn-action" onclick="saveInventory()" style="width:100%;"><i class="fas fa-save"></i> حفظ الصنف</button></div></div>
+    <div id="modal_whatsapp" class="modal"><div class="modal-content" style="text-align:center;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--whatsapp);"><i class="fab fa-whatsapp"></i> إرسال رسالة للإدارة</h3><p style="margin-bottom:20px; font-size:14px; color:#555; font-weight:bold;">اختر الرقم اللي حابب تبعتله التقرير أو الإنذار:</p><input type="hidden" id="waMessageContent"><button class="btn-action" style="width:100%; background:#128C7E; margin-bottom:10px; font-size:16px;" onclick="executeWhatsApp('201067876987')">إرسال للرقم الأول (01067876987) <i class="fas fa-paper-plane"></i></button><button class="btn-action" style="width:100%; background:#075E54; font-size:16px;" onclick="executeWhatsApp('201066709180')">إرسال للرقم الثاني (01066709180) <i class="fas fa-paper-plane"></i></button></div></div>
     <div id="modal_inv_edit" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-boxes"></i> تزويد رصيد الصنف</h3><h4 id="edit_inv_name_display" style="color:var(--primary); text-align:center; margin-bottom:15px;"></h4><input type="hidden" id="edit_inv_id"><label style="font-weight:bold; font-size:12px;">الكمية المشتراة:</label><input type="number" id="edit_inv_add_qty" class="form-control"><label style="font-weight:bold; font-size:12px;">التكلفة الإجمالية:</label><input type="number" id="edit_inv_add_cost" class="form-control"><button class="btn-action" onclick="saveInvEdit()" style="width:100%;"><i class="fas fa-plus"></i> تأكيد التزويد</button></div></div>
     <div id="modal_inv_withdraw" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-minus-circle"></i> سحب رصيد للبار</h3><h4 id="withdraw_inv_name_display" style="color:var(--primary); text-align:center; margin-bottom:15px;"></h4><input type="hidden" id="withdraw_inv_id"><label style="font-weight:bold; font-size:12px;">الكمية المسحوبة من المخزن:</label><input type="number" id="withdraw_inv_qty" class="form-control" placeholder="اكتب الكمية..."><button class="btn-action" onclick="saveInvWithdraw()" style="width:100%; background: var(--secondary); color: black;"><i class="fas fa-minus"></i> تأكيد السحب</button></div></div>
     <div id="modal_supplier" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>إضافة مورد جديد</h3><input type="text" id="new_sup_name" placeholder="اسم المورد..." class="form-control"><input type="text" id="new_sup_phone" placeholder="رقم التليفون..." class="form-control"><input type="text" id="new_sup_desc" placeholder="بيورد إيه؟..." class="form-control"><button class="btn-action" onclick="saveSupplier()" style="width:100%"><i class="fas fa-save"></i> حفظ المورد</button></div></div>
@@ -623,9 +590,52 @@
     <div id="modal_staff" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>بيانات الموظف</h3><input type="text" id="staff_name" placeholder="الاسم" class="form-control"><input type="text" id="staff_job" placeholder="الوظيفة" class="form-control"><input type="number" id="staff_salary" placeholder="الراتب الأساسي" class="form-control"><button class="btn-action" onclick="saveStaff()" style="width:100%">حفظ</button></div></div>
     <div id="modal_staff_action" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 id="staff_action_title">تسجيل حركة</h3><input type="hidden" id="staff_action_id"><select id="staff_action_type" class="form-control" onchange="handleStaffActionChange()"><option value="advance">سلفة (تخصم من الراتب)</option><option value="deduction">خصم / جزاء</option><option value="absence">غياب (يوم أو أكثر)</option><option value="bonus">مكافأة</option><option value="salary">صرف الراتب (القبض)</option></select><input type="number" id="staff_action_amount" placeholder="المبلغ" class="form-control"><input type="text" id="staff_action_note" placeholder="ملاحظات / السبب (اختياري)..." class="form-control"><button class="btn-action" onclick="saveStaffAction()" style="width:100%">تأكيد وتسجيل</button></div></div>
     <div id="modal_close_shift" class="modal"><div class="modal-content" style="width: 400px; text-align: right;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-lock"></i> تقفيل وردية اليوم</h3><div id="shift_report_body" style="line-height:2; font-size:16px;"></div><button class="btn-action" style="width:100%; margin-top:20px; background: var(--primary);" onclick="printShiftReport()"><i class="fas fa-print"></i> طباعة الإيصال وتقفيل اليومية</button></div></div>
-    <div id="modal_coffee_options" class="modal"><div class="modal-content" style="width: 350px;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-coffee"></i> تفضيلات القهوة</h3><label style="font-weight:bold; margin-bottom:5px; display:block;">نوع البن:</label><select id="coffee_type" class="form-control"><option value="سادة">سادة</option><option value="محوج">محوج</option></select><label style="font-weight:bold; margin-bottom:5px; display:block;">التحميص:</label><select id="coffee_roast" class="form-control"><option value="فاتح">فاتح</option><option value="وسط">وسط</option><option value="غامق">غامق</option></select><label style="font-weight:bold; margin-bottom:5px; display:block;">السكر:</label><select id="coffee_sugar" class="form-control"><option value="ساده">ساده</option><option value="ع الريحه">ع الريحه</option><option value="مظبوط">مظبوط</option><option value="مانو">مانو</option><option value="زيادة">زيادة</option></select><button class="btn-action" onclick="confirmCoffee()" style="width:100%; margin-top:10px;">إضافة للأوردر ✅</button></div></div>
     <div id="modal_generic_input" class="modal"><div class="modal-content" style="width: 350px;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 id="generic_modal_title">...</h3><input type="hidden" id="generic_modal_action"><input type="text" id="generic_modal_text" class="form-control" placeholder="..."><input type="number" id="generic_modal_number" class="form-control" placeholder="المبلغ..." style="display:none;"><button class="btn-action" onclick="executeGenericAction()" style="width:100%; font-size:16px;">تأكيد ✅</button></div></div>
     <div id="modal_loyalty_redeem" class="modal"><div class="modal-content" style="width: 350px;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-gift"></i> استبدال النقاط</h3><p id="loyalty_redeem_info" style="font-size: 14px; color: #555; margin-bottom: 15px; line-height: 1.8;"></p><input type="hidden" id="loyalty_redeem_phone"><input type="number" id="loyalty_redeem_amount" class="form-control" placeholder="عدد النقاط المراد خصمها..."><button class="btn-action" onclick="executeRedeemPoints()" style="width:100%; background: var(--secondary); color: black;">تأكيد الخصم ✅</button></div></div>
+
+    <div id="modal_coffee_options" class="modal">
+        <div class="modal-content" style="width: 380px;">
+            <button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            <h3 style="color:var(--primary); margin-bottom:15px;"><i class="fas fa-mug-hot"></i> تظبيط المشروب</h3>
+            
+            <div id="pos_blend_section" style="display:none; margin-bottom: 20px;">
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <label style="font-weight:bold; margin-bottom:5px; display:block;">التحويجة:</label>
+                        <select id="coffee_type" class="form-control" style="margin-bottom:0;"><option value="سادة">سادة</option><option value="محوج">محوج</option></select>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-weight:bold; margin-bottom:5px; display:block;">التحميص:</label>
+                        <select id="coffee_roast" class="form-control" style="margin-bottom:0;"><option value="فاتح">فاتح</option><option value="وسط" selected>وسط</option><option value="غامق">غامق</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <label style="font-weight:bold; margin-bottom:5px; display:block;">السكر:</label>
+            <select id="coffee_sugar" class="form-control"><option value="ساده">ساده</option><option value="ع الريحه">ع الريحه</option><option value="مظبوط" selected>مظبوط</option><option value="مانو">مانو</option><option value="زيادة">زيادة</option><option value="بره">سكر بره</option></select>
+            
+            <button class="btn-action" onclick="confirmCoffee()" style="width:100%; margin-top:10px;">إضافة للأوردر ✅</button>
+        </div>
+    </div>
+
+    <div id="modal_split_bill" class="modal">
+        <div class="modal-content" style="width: 480px;">
+            <button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            <h3 style="color:#8e44ad; border-bottom-color:#8e44ad;"><i class="fas fa-cut"></i> تقسيم الفاتورة المتقدم</h3>
+            <p style="font-size:13px; color:#7f8c8d; margin-bottom:15px;">حدد كمية الأصناف التي سيدفعها العميل الآن لطباعة فاتورة منفصلة بها.</p>
+            
+            <div id="split_items_container" style="max-height: 280px; overflow-y: auto; background: var(--bg); padding: 10px; border-radius: 10px; margin-bottom: 15px;"></div>
+            
+            <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-bottom:15px; padding: 10px; border: 2px dashed #8e44ad; border-radius: 10px;">
+                <span>إجمالي الفاتورة المنفصلة:</span><span id="split_total_val" style="color:var(--success);">0 ج</span>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button onclick="processSplitCheckout('cash')" style="background:var(--success); color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-family:'Cairo', sans-serif;"><i class="fas fa-print"></i> دفع وطباعة كاش</button>
+                <button onclick="processSplitCheckout('visa')" style="background:#2980b9; color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-family:'Cairo', sans-serif;"><i class="fas fa-credit-card"></i> دفع وطباعة فيزا</button>
+            </div>
+        </div>
+    </div>
 
     <div id="invoiceModal" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>تأكيد الدفع 🧾</h3><div id="invoiceModalContent" style="margin-bottom:10px; border-bottom:1px dashed #ccc; padding-bottom:10px;"></div><div style="background: #f0fdf4; padding: 10px; border-radius: 8px; border: 1px dashed var(--success); margin-bottom: 15px;"><label style="font-size: 13px; font-weight: 900; color: var(--primary-dark); display: block; margin-bottom: 5px;">نظام الولاء VIP 🎁</label><div style="display: flex; gap: 5px;"><input type="text" id="loyaltyNameInput" class="form-control" placeholder="اسم العميل..." style="margin-bottom: 0; flex: 1;"><input type="tel" id="loyaltyPhoneInput" class="form-control" placeholder="رقم الهاتف..." style="margin-bottom: 0; flex: 1;" maxlength="11"></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button onclick="processCheckout('cash',true)" style="background:var(--success); color:white; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">كاش 💵</button><button onclick="processCheckout('vodafone',true)" style="background:#e74c3c; color:white; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">فودافون 📱</button><button onclick="processCheckout('insta',true)" style="background:#8e44ad; color:white; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">انستا 🟣</button><button onclick="processCheckout('visa',true)" style="background:#2980b9; color:white; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">فيزا 💳</button></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;"><button onclick="openGenericModal('pos_credit')" style="background:#f39c12; color:white; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">آجل 📝</button><button onclick="openGenericModal('pos_host')" style="background:#34495e; color:white; padding:10px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">ضيافة 🎁</button></div></div></div>
 
@@ -687,6 +697,7 @@
         <span class="powered-by">Powered by: Neo Cafe</span>
     </div>
 </div>
+
 <script>
 /* ================== Data Base (Local + Firebase) ================== */
 const DB = {
@@ -886,7 +897,7 @@ function deleteMenuItem(catKey, subIdx, idx) {
     localStorage.setItem('neo_live_menu_v1', JSON.stringify(MENU)); if(subIdx !== null) renderMenuEditorItems(); else renderMenuEditor(); renderCategories(); changeCat(catKey); forceMenuSync(); setupRecipeSelect();
 }
 
-/* ================== POS & Cart ================== */
+/* ================== POS & Cart & Smart Coffee ================== */
 const LAYOUT=[
     {id:'takeaway',label:'تيك أواي 🛍️',area:'takeaway',type:'static_order'},
     {id:14,label:'شارع شمال',area:'out_l'},
@@ -937,11 +948,44 @@ function searchPOSProducts() {
     const filtered = allItems.filter(p => p.name.toLowerCase().includes(term));
     renderProducts(filtered);
 }
-function addToCart(id,n,p){if(!currentTable)return alert('حدد طاولة أولاً!'); if(n.includes("قهوة تركي")){tempCoffeeItem = {id, n, p}; openModal('modal_coffee_options'); return;} _addItemToCart(id, n, p);}
-function confirmCoffee(){const type = document.getElementById('coffee_type').value; const roast = document.getElementById('coffee_roast').value; const sugar = document.getElementById('coffee_sugar').value; const fullName = `${tempCoffeeItem.n} (${type} ${roast} - ${sugar})`; _addItemToCart(tempCoffeeItem.id, fullName, tempCoffeeItem.p); closeModal();}
+
+// تعديل المشروبات الذكي للكاشير
+function addToCart(id, n, p) {
+    if(!currentTable) return alert('حدد طاولة أولاً يا وحش!'); 
+    
+    let isEspresso = n.includes('اسبريسو') || n.includes('إسبريسو');
+    let isTurkish = n.includes('تركي') || n.includes('قهوة سادة') || n.includes('قهوة محوج');
+    let hotDrinks = ['فرنساوي', 'بندق', 'شاي', 'ينسون', 'نعناع', 'سحلب', 'كاكاو', 'نسكافيه', 'كابتشينو', 'لاتيه', 'موكا', 'قرفة', 'جنزبيل', 'حلبة', 'هوت شوكليت', 'قهوة', 'مشروب'];
+    let needsSugar = hotDrinks.some(drink => n.includes(drink)) && !isTurkish && !isEspresso;
+
+    if (isTurkish) {
+        tempCoffeeItem = {id, n, p, type: 'turkish'};
+        document.getElementById('pos_blend_section').style.display = 'block';
+        document.getElementById('coffee_type').value = 'سادة';
+        document.getElementById('coffee_roast').value = 'وسط';
+        document.getElementById('coffee_sugar').value = 'مظبوط';
+        openModal('modal_coffee_options');
+    } else if (needsSugar) {
+        tempCoffeeItem = {id, n, p, type: 'sugar_only'};
+        document.getElementById('pos_blend_section').style.display = 'none';
+        document.getElementById('coffee_sugar').value = 'مظبوط';
+        openModal('modal_coffee_options');
+    } else {
+        _addItemToCart(id, n, p);
+    }
+}
+function confirmCoffee() {
+    const type = document.getElementById('coffee_type').value; 
+    const roast = document.getElementById('coffee_roast').value; 
+    const sugar = document.getElementById('coffee_sugar').value; 
+    let extraText = tempCoffeeItem.type === 'turkish' ? ` (${type}-${roast}-سكر ${sugar})` : ` (سكر ${sugar})`;
+    const fullName = tempCoffeeItem.n + extraText; 
+    _addItemToCart(tempCoffeeItem.id, fullName, tempCoffeeItem.p); 
+    closeModal();
+}
+
 function _addItemToCart(id, name, price){if(!tablesOrder[currentTable])tablesOrder[currentTable]=[]; const existing = tablesOrder[currentTable].find(x => x.name === name); if(existing) existing.qty++; else tablesOrder[currentTable].push({id, name, price, qty:1}); saveTables(); renderCart(); renderMap();}
 
-// إضافة حسبة التيبس للـ renderCart
 function renderCart(){
     const c=document.getElementById('cartItems');
     if(!currentTable||!tablesOrder[currentTable]||!tablesOrder[currentTable].length){
@@ -1051,7 +1095,6 @@ function processCheckout(type, print, custName = ""){
         DB.saveData(DB.keys.loyalty, loy); 
     }
 
-    // Profit should not include tips. Profit = (Subtotal - Discount) - Cost
     let profitWithoutTips = (sub-disc) - cost;
 
     if(['cash','vodafone','insta','visa'].includes(type)){ const s=DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:cart,subTotal:sub,discount:disc,tips:tips,total,cost,profit:profitWithoutTips,type:'sale',method:type}); DB.saveData(DB.keys.sales,s); sendToKitchen(id,tableName(currentTable),cart,now.toISOString()); } 
@@ -1088,6 +1131,98 @@ function processCheckout(type, print, custName = ""){
     if(di)di.value=0; if(ti)ti.value=0; saveTables();renderCart();renderMap();updateDashboard(); checkStockAlerts(); renderLoyalty(); renderFinance(); closeModal();
 }
 function tableName(id){const t=LAYOUT.find(x=>x.id==id);return t?t.label:id;}
+
+/* ================== كود تقسيم الفاتورة المتقدم ================== */
+let splitSelection = [];
+function openSplitModal() {
+    if(!currentTable || !tablesOrder[currentTable] || tablesOrder[currentTable].length === 0) return alert('لا يوجد طلبات على هذه الطاولة لتقسيمها!');
+    // بننسخ محتويات الترابيزة وبنضيفلها كاونتر اسمه selectedQty هيبدأ بـ صفر
+    splitSelection = tablesOrder[currentTable].map(i => ({...i, selectedQty: 0}));
+    renderSplitUI();
+    openModal('modal_split_bill');
+}
+
+function renderSplitUI() {
+    let html = '';
+    let splitTotal = 0;
+    splitSelection.forEach((item, idx) => {
+        splitTotal += item.price * item.selectedQty;
+        html += `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px dashed #ccc;">
+            <div style="flex:2; font-weight:bold; font-size: 14px;">${item.name} <br><small style="color:#e74c3c;">(المتاح بالترابيزة: ${item.qty - item.selectedQty})</small></div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button class="btn-action" style="padding:4px 12px; background:#e74c3c; border-radius:6px;" onclick="modSplitQty(${idx}, -1)">-</button>
+                <span style="font-weight:900; font-size:18px; width:20px; text-align:center; display:inline-block;">${item.selectedQty}</span>
+                <button class="btn-action" style="padding:4px 12px; background:#27ae60; border-radius:6px;" onclick="modSplitQty(${idx}, 1)">+</button>
+            </div>
+            <div style="flex:1; text-align:left; font-weight:900; color:var(--primary); font-size:15px;">${item.price * item.selectedQty} ج</div>
+        </div>`;
+    });
+    document.getElementById('split_items_container').innerHTML = html;
+    document.getElementById('split_total_val').innerText = splitTotal + ' ج';
+}
+
+function modSplitQty(idx, d) {
+    let item = splitSelection[idx];
+    let newQty = item.selectedQty + d;
+    // نتأكد إنه مش بياخد بالسالب، ومش بياخد أكتر من اللي موجود على الترابيزة أصلاً
+    if(newQty >= 0 && newQty <= item.qty) {
+        item.selectedQty = newQty;
+        renderSplitUI();
+    }
+}
+
+function processSplitCheckout(method) {
+    // بنفلتر عشان ناخد بس الأصناف اللي العميل اختار يدفعها دلوقتي
+    let itemsToPay = splitSelection.filter(i => i.selectedQty > 0).map(i => ({id: i.id, name: i.name, price: i.price, qty: i.selectedQty}));
+    
+    if(itemsToPay.length === 0) return alert('لم تقم باختيار أي أصناف للدفع!');
+    
+    let subTotal = itemsToPay.reduce((a,b) => a + (b.price * b.qty), 0);
+    
+    let now = new Date(); let id = Date.now(); let cost = 0;
+    const rec=DB.getData(DB.keys.recipes); const inv=DB.getData(DB.keys.inv);
+    
+    // خصم الخامات من المخزن للأصناف المدفوعة فقط
+    itemsToPay.forEach(i=>{const r=rec[i.id];if(r)r.forEach(g=>{const s=inv.find(x=>x.id===g.invId);if(s){s.stock-=g.qty*i.qty;cost+=s.avgCost*g.qty*i.qty;}});});
+    DB.saveData(DB.keys.inv,inv);
+    
+    // تسجيل عملية بيع منفصلة
+    let s = DB.getData(DB.keys.sales);
+    s.push({id,date:now.toISOString(),items:itemsToPay,subTotal:subTotal,discount:0,tips:0,total:subTotal,cost,profit:subTotal-cost,type:'sale',method:method});
+    DB.saveData(DB.keys.sales, s);
+    
+    // الأهم: خصم الكميات اللي اتدفعت من الترابيزة الرئيسية
+    splitSelection.forEach((item, idx) => {
+        if(item.selectedQty > 0) {
+            tablesOrder[currentTable][idx].qty -= item.selectedQty;
+        }
+    });
+    
+    // مسح الأصناف اللي كميتها بقت صفر من الترابيزة
+    tablesOrder[currentTable] = tablesOrder[currentTable].filter(i => i.qty > 0);
+    if(tablesOrder[currentTable].length === 0) {
+         delete tablesMeta[currentTable]; saveTablesMeta();
+    }
+    
+    saveTables(); renderCart(); renderMap(); updateDashboard(); renderFinance();
+    
+    // طباعة ريسيت منفصل للأصناف دي بس
+    document.getElementById('p_date').textContent=now.toLocaleDateString('ar-EG'); 
+    document.getElementById('p_time').textContent=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}); 
+    document.getElementById('p_id').textContent=id.toString().slice(-6); 
+    document.getElementById('p_table').textContent=tableName(currentTable) + " (منفصل)";
+    let mTxt=method==='vodafone'?'فودافون كاش':(method==='insta'?'انستا باي':(method==='visa'?'فيزا':'كاش'));
+    document.getElementById('p_items').innerHTML=itemsToPay.map(i=>`<tr><td>${i.name}</td><td>${i.price}</td><td>${i.qty}</td><td>${i.price*i.qty}</td></tr>`).join(''); 
+    document.getElementById('p_subtotal').textContent=subTotal.toFixed(2);
+    document.getElementById('p_discount_row').style.display='none';
+    document.getElementById('p_tips_row').style.display='none';
+    document.getElementById('p_total').textContent=subTotal.toFixed(2); 
+    document.getElementById('p_method').textContent=mTxt;
+    
+    setTimeout(()=>{window.print(); closeModal();},250);
+}
+
 
 /* ================== WhatsApp Automation ================== */
 function openWhatsAppModal(type) {
@@ -1401,7 +1536,6 @@ function openCloseShiftModal(){
     const cs=ts.filter(x=>x.method==='cash').reduce((a,b)=>a+b.total,0),vs=ts.filter(x=>x.method==='vodafone').reduce((a,b)=>a+b.total,0),is=ts.filter(x=>x.method==='insta').reduce((a,b)=>a+b.total,0),vis=ts.filter(x=>x.method==='visa').reduce((a,b)=>a+b.total,0); 
     const debtIncomes = ts.filter(x=>x.type==='debt_payment').reduce((a,b)=>a+b.total,0); 
     
-    // حساب التيبس في الوردية دي للوضوح بس
     const todayTips = ts.reduce((a,b) => a + (b.tips || 0), 0);
     
     const html=`
@@ -1419,9 +1553,9 @@ function openCloseShiftModal(){
     document.getElementById('shift_report_body').innerHTML=html;openModal('modal_close_shift'); 
 }
 function printShiftReport(){window.print();}
-/* ================== الموتور الإجباري لتقفيل اليومية (Z-Report) - النسخة الفخمة ================== */
 
-// 1. حقن رسالة التنبيه الشيك
+/* ================== الموتور الإجباري لتقفيل اليومية (Z-Report) ================== */
+
 (function injectZReportModal() {
     if(document.getElementById('modal_z_report')) return;
     document.body.insertAdjacentHTML('beforeend', `
@@ -1444,7 +1578,6 @@ function printShiftReport(){window.print();}
     `);
 })();
 
-// 2. ربط زرار التقفيل بالشاشة الشيك
 setTimeout(function() {
     let allElements = document.querySelectorAll('.nav-btn, button, a, li');
     allElements.forEach(el => {
@@ -1458,9 +1591,8 @@ setTimeout(function() {
     });
 }, 1500);
 
-// 3. التنفيذ والطباعة بنفس ستايل الفاتورة الأصلية (تم إصلاح خطأ الـ script هنا)
 function executeZReport() {
-    document.getElementById('modal_z_report').style.display = 'none'; // نقفل الشاشة
+    document.getElementById('modal_z_report').style.display = 'none'; 
 
     let sales = JSON.parse(localStorage.getItem('neo_sales_v2')) || [];
     let exps = JSON.parse(localStorage.getItem('neo_exp_v2')) || [];
@@ -1469,7 +1601,6 @@ function executeZReport() {
     let totalExp = exps.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
     let netCash = totalSales - totalExp;
 
-    // الحفظ في الأرشيف
     let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
     archive.push({
         date: new Date().toLocaleString('ar-EG'),
@@ -1480,7 +1611,6 @@ function executeZReport() {
     localStorage.setItem('neo_archive_v1', JSON.stringify(archive));
     try { database.ref('NeoCafe/neo_archive_v1').set(archive); } catch(e){}
 
-    // تصفير الوردية الحالية
     localStorage.setItem('neo_sales_v2', JSON.stringify([]));
     localStorage.setItem('neo_exp_v2', JSON.stringify([]));
     try { 
@@ -1491,7 +1621,6 @@ function executeZReport() {
     if(typeof updateDashboard === 'function') updateDashboard();
     if(typeof renderFinance === 'function') renderFinance();
 
-    // طباعة إيصال التقفيل بنفس الستايل المظبوط
     let printWindow = window.open('', '_blank', 'width=350,height=600');
     printWindow.document.write(`
         <html dir="rtl">
@@ -1541,7 +1670,7 @@ function executeZReport() {
             </div>
             <script>
                 setTimeout(() => { window.print(); window.close(); }, 500);
-            <\/script>
+            </scr`+`ipt>
         </body>
         </html>
     `);
@@ -1549,241 +1678,7 @@ function executeZReport() {
     printWindow.focus();
 }
 
-/* ================== الموتور الشامل لصفحة الخزنة والموردين (النسخة الاحترافية V3) ================== */
-
-// 1. حقن الشاشات المنبثقة (ضفنا شاشة سجل حركات الخزنة)
-(function injectFinanceModals() {
-    if(document.getElementById('modal_custom_vault')) return;
-    document.body.insertAdjacentHTML('beforeend', `
-    <div id="modal_custom_vault" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 id="cv_title" style="color:var(--primary); margin-bottom:15px;">الخزنة</h3><input type="hidden" id="cv_type"><label style="font-size:12px; font-weight:bold;">المبلغ:</label><input type="number" id="cv_amount" class="form-control" placeholder="أدخل المبلغ هنا..."><label style="font-size:12px; font-weight:bold;">البيان / الملاحظات:</label><input type="text" id="cv_note" class="form-control" placeholder="سبب الإيداع أو السحب..."><button class="btn-action" onclick="confirmVaultTx()" style="width:100%"><i class="fas fa-check"></i> تأكيد العملية</button></div></div>
-    
-    <div id="modal_vault_log" class="modal"><div class="modal-content" style="max-width:600px;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--primary); margin-bottom:15px;"><i class="fas fa-history"></i> سجل حركات الخزنة (تعديل الأخطاء)</h3><div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; text-align:center; font-size:13px;"><thead><tr style="background:var(--primary); color:white;"><th>النوع</th><th>المبلغ</th><th>البيان</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody id="vault_log_tbody"></tbody></table></div></div></div>
-
-    <div id="modal_custom_supplier" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--primary); margin-bottom:15px;"><i class="fas fa-truck"></i> إضافة مورد جديد</h3><input type="text" id="cs_name" class="form-control" placeholder="اسم المورد (ضروري)..."><input type="text" id="cs_phone" class="form-control" placeholder="رقم التليفون..."><input type="text" id="cs_supplies" class="form-control" placeholder="بيورد إيه؟..."><button class="btn-action" onclick="confirmAddSupplier()" style="width:100%"><i class="fas fa-save"></i> حفظ المورد</button></div></div>
-
-    <div id="modal_vault_pin" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:#e74c3c; margin-bottom:10px;"><i class="fas fa-lock"></i> الخزنة محمية</h3><p style="text-align:center; font-size:13px; margin-bottom:15px; color:#555;">برجاء إدخال الرقم السري للمدير لعرض الرصيد</p><input type="password" id="vault_pin_input" class="form-control" placeholder="****" style="text-align:center; font-size:30px; letter-spacing:15px;"><button class="btn-action" onclick="verifyVaultPin()" style="width:100%; background:#e74c3c;"><i class="fas fa-unlock"></i> فتح الخزنة</button></div></div>
-    `);
-})();
-
-// 2. الموتور الأساسي
-function renderFinance() {
-    let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
-    window.currentVaultBalance = vault.reduce((sum, tx) => tx.type === 'in' ? sum + parseFloat(tx.amount) : sum - parseFloat(tx.amount), 0);
-    
-    // تنظيف الأرقام الغلط وإضافة زرار (سجل الحركات) الشيك
-    let vaultCard = document.querySelector('.page#finance .finance-grid > div:first-child');
-    if(vaultCard) {
-        let titleH3 = vaultCard.querySelector('h3');
-        if(titleH3 && !titleH3.innerHTML.includes('fa-history')) {
-            titleH3.innerHTML = `الخزنة الرئيسية (The Vault) <button onclick="openVaultLog()" style="float:left; background:none; border:none; color:var(--gold); font-size:18px; cursor:pointer;" title="سجل الحركات وإصلاح الأخطاء"><i class="fas fa-history"></i></button>`;
-        }
-        
-        let allH2s = vaultCard.querySelectorAll('h2');
-        allH2s.forEach((h2, index) => {
-            if(index === 0) { // هنخلي أول H2 هو الخزنة بس
-                h2.id = 'vault_secret_balance';
-                h2.style.cursor = 'pointer';
-                h2.title = 'اضغط لعرض الرصيد';
-                h2.onclick = checkVaultPin;
-                
-                if(!window.isVaultUnlocked) {
-                    h2.innerHTML = '<i class="fas fa-eye-slash" style="color:#7f8c8d; font-size:24px;"></i> <span style="letter-spacing:5px;">****</span> ج';
-                } else {
-                    h2.innerHTML = '<i class="fas fa-eye" style="color:#27ae60; font-size:24px;"></i> ' + window.currentVaultBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ج';
-                }
-            } else {
-                h2.style.display = 'none'; // نخفي أي H2 زيادة عشان ميعملش دوشة
-            }
-        });
-    }
-
-    // تنظيف أي H2 بالغلط فوق الجداول
-    document.querySelectorAll('.page#finance > h2, .page#finance table h2').forEach(h => h.style.display = 'none');
-
-    // 3. تحليل التعادل العميق (باليوم)
-    let fc = JSON.parse(localStorage.getItem('neo_fixed_costs_v1')) || { rent: 25000, salaries: 13000, utilities: 5000 };
-    let inputs = document.querySelectorAll('.finance-grid input');
-    if(inputs.length >= 3) {
-        inputs[0].value = fc.utilities || 0; inputs[1].value = fc.salaries || 0; inputs[2].value = fc.rent || 0;
-        
-        let totalFixed = (fc.utilities + fc.salaries + fc.rent);
-        let breakEven = totalFixed / 0.6; // التارجت الشهري
-        
-        // حسابات اليوميات الذكية
-        let now = new Date();
-        let daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        let daysLeft = daysInMonth - now.getDate() + 1; // الأيام المتبقية في الشهر
-        
-        let remainingTarget = breakEven - window.currentVaultBalance; // المتبقي بعد خصم رصيد الخزنة الحالي
-        if(remainingTarget < 0) remainingTarget = 0; // لو كسرنا التارجت
-        
-        let dailyTarget = remainingTarget / daysLeft; // المطلوب يومياً
-        
-        let analysisBox = document.querySelector('.finance-grid').parentElement.querySelector('div[style*="dashed"]') || document.querySelectorAll('.finance-grid')[0].nextElementSibling;
-        if(analysisBox) {
-            analysisBox.innerHTML = `
-            <div style="padding:15px; border:2px dashed var(--primary); border-radius:10px; text-align:center; margin-top:15px; background:white;">
-                <div style="color:var(--text); margin-bottom:10px; font-size:14px;">إجمالي المصاريف الثابتة: <b>${totalFixed.toLocaleString()} ج</b> | تارجت التعادل الشهري: <b>${Math.round(breakEven).toLocaleString()} ج</b></div>
-                <div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; display:inline-block; border:1px solid #eee;">
-                    <span style="color:#7f8c8d; font-size:13px;">باقي على التارجت:</span> <b style="color:#e74c3c; font-size:18px;">${Math.round(remainingTarget).toLocaleString()} ج</b>
-                    <span style="color:#7f8c8d; font-size:13px; margin:0 10px;">|</span>
-                    <span style="color:#7f8c8d; font-size:13px;">الأيام المتبقية:</span> <b style="color:var(--primary);">${daysLeft} يوم</b>
-                </div>
-                <div style="color:var(--text); font-size:15px;">الهدف اليومي المطلوب من الآن لنهاية الشهر: <b style="font-size:20px; color:#27ae60; background:#e8f8f5; padding:2px 10px; border-radius:5px;">${Math.round(dailyTarget).toLocaleString()} ج / يومياً</b></div>
-            </div>`;
-        }
-    }
-
-    // 4 & 5. الموردين والأرشيف (طريقة الفصل الذكية)
-    let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
-    let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
-    
-    document.querySelectorAll('.page#finance table').forEach(tbl => {
-        let tbody = tbl.querySelector('tbody');
-        if(!tbody) return;
-        
-        // لو ده جدول الموردين
-        if(tbl.innerText.includes('اسم المورد')) {
-            tbody.innerHTML = suppliers.map(s => `<tr style="text-align:center; border-bottom:1px solid #eee;">
-                <td style="padding:10px;"><strong>${s.name}</strong></td>
-                <td dir="ltr">${s.phone || '-'}</td>
-                <td><span style="background:var(--bg); padding:5px 10px; border-radius:5px;">${s.supplies || '-'}</span></td>
-                <td><button onclick="deleteSupplier('${s.id}')" style="color:white; background:#e74c3c; padding:5px 10px; border-radius:5px; border:none; cursor:pointer;"><i class="fas fa-trash"></i> مسح</button></td>
-            </tr>`).join('');
-        }
-        
-        // لو ده جدول الأرشيف
-        if(tbl.innerText.includes('تاريخ الوردية') || tbl.innerText.includes('إجمالي المبيعات')) {
-            tbody.innerHTML = archive.slice(-15).reverse().map((day, index) => `<tr style="text-align:center; border-bottom:1px solid #eee;">
-                <td style="padding:10px; font-size:12px;">${day.date || 'غير محدد'}</td>
-                <td style="color:#27ae60; font-weight:bold;">${parseFloat(day.totalSales || 0).toLocaleString()} ج</td>
-                <td style="color:#e74c3c; font-weight:bold;">${parseFloat(day.totalExpenses || 0).toLocaleString()} ج</td>
-                <td style="font-weight:bold; color:var(--primary);">${parseFloat(day.netCash || 0).toLocaleString()} ج</td>
-                <td><button onclick="deleteArchiveRecord(${archive.length - 1 - index})" style="color:white; background:#e74c3c; padding:5px 10px; border-radius:5px; border:none; cursor:pointer;"><i class="fas fa-trash"></i> مسح</button></td>
-            </tr>`).join('');
-        }
-    });
-
-    // ربط الزراير
-    document.querySelectorAll('button').forEach(btn => {
-        if(btn.innerText.includes('حفظ وتحديث التحليل')) btn.onclick = saveFixedCosts;
-        if(btn.innerText.includes('إضافة مورد')) btn.onclick = addSupplier;
-        if(btn.innerText.includes('إيداع (توريد)')) btn.onclick = () => quickVaultTx('in');
-        if(btn.innerText.includes('سحب')) { if(!btn.innerHTML.includes('fa-minus')) btn.onclick = () => quickVaultTx('out'); }
-    });
-
-    // حساب التيبس للشهر الحالي
-    const s = DB.getData(DB.keys.sales).filter(x=>x.type!=='debt_payment');
-    const currentMonth = new Date().toISOString().slice(0,7);
-    let totalMonthTips = 0;
-    s.forEach(sale => {
-        if(sale.date.startsWith(currentMonth) && sale.tips) {
-            totalMonthTips += sale.tips;
-        }
-    });
-    let tipsEl = document.getElementById('financeTotalTips');
-    if(tipsEl) tipsEl.textContent = totalMonthTips.toFixed(2) + ' ج';
-}
-
-// === دوال التشغيل ===
-
-function checkVaultPin() {
-    if(window.isVaultUnlocked) { window.isVaultUnlocked = false; renderFinance(); } 
-    else { document.getElementById('vault_pin_input').value = ''; openModal('modal_vault_pin'); }
-}
-function verifyVaultPin() {
-    if(document.getElementById('vault_pin_input').value === '1111') {
-        window.isVaultUnlocked = true; closeModal(); renderFinance();
-        setTimeout(() => { window.isVaultUnlocked = false; renderFinance(); }, 15000); 
-    } else alert('❌ الرقم السري غير صحيح!');
-}
-
-function quickVaultTx(type) {
-    document.getElementById('cv_type').value = type;
-    document.getElementById('cv_title').innerHTML = type === 'in' ? '<i class="fas fa-arrow-down" style="color:#27ae60;"></i> إيداع نقدي للخزنة' : '<i class="fas fa-arrow-up" style="color:#e74c3c;"></i> سحب من الخزنة';
-    document.getElementById('cv_amount').value = ''; document.getElementById('cv_note').value = '';
-    openModal('modal_custom_vault');
-}
-function confirmVaultTx() {
-    let type = document.getElementById('cv_type').value; let amount = parseFloat(document.getElementById('cv_amount').value);
-    let note = document.getElementById('cv_note').value;
-    if(!amount || amount <= 0) return alert('أدخل مبلغ صحيح!');
-    
-    let vaultData = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
-    vaultData.push({ id: 'v_' + Date.now(), type: type, amount: amount, note: note || (type === 'in' ? 'إيداع عام' : 'سحب عام'), date: new Date().toISOString() });
-    localStorage.setItem('neo_vault_v1', JSON.stringify(vaultData));
-    try { database.ref('NeoCafe/neo_vault_v1').set(vaultData); } catch(e) {}
-    
-    closeModal(); window.isVaultUnlocked = true; renderFinance();
-    setTimeout(() => { window.isVaultUnlocked = false; renderFinance(); }, 8000);
-}
-
-// سجل حركات الخزنة (لإصلاح الأخطاء)
-function openVaultLog() {
-    let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
-    document.getElementById('vault_log_tbody').innerHTML = vault.reverse().map(tx => `
-        <tr style="border-bottom:1px solid #ddd;">
-            <td style="padding:8px; color:${tx.type === 'in' ? '#27ae60' : '#e74c3c'}; font-weight:bold;">${tx.type === 'in' ? 'إيداع 📥' : 'سحب 📤'}</td>
-            <td style="font-weight:bold;">${parseFloat(tx.amount).toLocaleString()} ج</td>
-            <td>${tx.note}</td>
-            <td style="font-size:11px; color:#777;">${new Date(tx.date).toLocaleDateString('ar-EG')}</td>
-            <td><button onclick="deleteVaultTx('${tx.id}')" style="background:none; border:none; color:#e74c3c; cursor:pointer;" title="حذف لتصحيح الخطأ"><i class="fas fa-trash-alt"></i></button></td>
-        </tr>
-    `).join('');
-    openModal('modal_vault_log');
-}
-function deleteVaultTx(id) {
-    if(confirm('متأكد إنك عاوز تمسح الحركة دي عشان تصلح الغلطة؟ 🗑️')) {
-        let vault = JSON.parse(localStorage.getItem('neo_vault_v1')) || [];
-        vault = vault.filter(tx => tx.id !== id);
-        localStorage.setItem('neo_vault_v1', JSON.stringify(vault));
-        try { database.ref('NeoCafe/neo_vault_v1').set(vault); } catch(e) {}
-        renderFinance(); openVaultLog(); // تحديث الشاشتين
-    }
-}
-
-function saveFixedCosts() {
-    let inputs = document.querySelectorAll('.finance-grid input');
-    if(inputs.length >= 3) {
-        let fc = { utilities: parseFloat(inputs[0].value)||0, salaries: parseFloat(inputs[1].value)||0, rent: parseFloat(inputs[2].value)||0 };
-        localStorage.setItem('neo_fixed_costs_v1', JSON.stringify(fc));
-        try { database.ref('NeoCafe/neo_fixed_costs_v1').set(fc); } catch(e){}
-        renderFinance();
-    }
-}
-
-function addSupplier() { document.getElementById('cs_name').value = ''; document.getElementById('cs_phone').value = ''; document.getElementById('cs_supplies').value = ''; openModal('modal_custom_supplier'); }
-function confirmAddSupplier() {
-    let name = document.getElementById('cs_name').value; let phone = document.getElementById('cs_phone').value || '-'; let supplies = document.getElementById('cs_supplies').value || '-';
-    if(!name) return alert('اكتب اسم المورد!');
-    let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || [];
-    suppliers.push({ id: 'sup_'+Date.now(), name, phone, supplies });
-    localStorage.setItem('neo_suppliers_v1', JSON.stringify(suppliers));
-    try { database.ref('NeoCafe/neo_suppliers_v1').set(suppliers); } catch(e){}
-    closeModal(); renderFinance();
-}
-function deleteSupplier(id) {
-    if(confirm('متأكد إنك عاوز تمسح المورد؟ 🗑️')) {
-        let suppliers = JSON.parse(localStorage.getItem('neo_suppliers_v1')) || []; suppliers = suppliers.filter(s => s.id !== id);
-        localStorage.setItem('neo_suppliers_v1', JSON.stringify(suppliers)); try { database.ref('NeoCafe/neo_suppliers_v1').set(suppliers); } catch(e){}
-        renderFinance();
-    }
-}
-
-// مسح يومية من الأرشيف
-function deleteArchiveRecord(index) {
-    if(confirm('تحذير: هتمسح تقفيل اليومية دي من الأرشيف نهائياً.. متأكد؟ ⚠️')) {
-        let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
-        archive.splice(index, 1);
-        localStorage.setItem('neo_archive_v1', JSON.stringify(archive));
-        try { database.ref('NeoCafe/neo_archive_v1').set(archive); } catch(e){}
-        renderFinance();
-    }
-}
-
-/* ================== الموتور الشامل (الملاحظات + الطباعة فقط) ================== */
-
-// 1. حقن حقل الملاحظات في الكاشير أوتوماتيك
+/* ================== الموتور الشامل للملاحظات والطباعة والترقيم ================== */
 setTimeout(() => {
     let discountInputs = document.querySelectorAll('input[type="number"]');
     let targetInput = Array.from(discountInputs).find(input => input.placeholder && input.placeholder.includes('خصم') || input.id && input.id.includes('cartTips'));
@@ -1795,7 +1690,6 @@ setTimeout(() => {
     }
 }, 1500);
 
-// 2. تعديل دالة الطباعة (ملاحظات + رقم تسلسلي)
 let originalWindowPrint2 = window.print;
 window.print = function() {
     let noteInput = document.getElementById('orderNoteInput');
@@ -1825,7 +1719,6 @@ window.print = function() {
     }
 
     originalWindowPrint2.apply(this, arguments);
-    
     if(noteInput) noteInput.value = ''; 
 };
 </script>
