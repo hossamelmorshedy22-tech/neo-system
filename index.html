@@ -423,7 +423,6 @@
     <div id="modal_whatsapp" class="modal"><div class="modal-content" style="text-align:center;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--whatsapp);"><i class="fab fa-whatsapp"></i> إرسال للإدارة</h3><input type="hidden" id="waMessageContent"><button class="btn-action" style="width:100%; background:#128C7E; margin-bottom:10px; font-size:16px;" onclick="executeWhatsApp('201067876987')">الرقم الأول <i class="fas fa-paper-plane"></i></button><button class="btn-action" style="width:100%; background:#075E54; font-size:16px;" onclick="executeWhatsApp('201066709180')">الرقم الثاني <i class="fas fa-paper-plane"></i></button></div></div>
     <div id="modal_inv_edit" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-plus-circle"></i> تزويد رصيد</h3><h4 id="edit_inv_name_display" style="text-align:center;"></h4><input type="hidden" id="edit_inv_id"><label style="font-weight:bold; font-size:12px;">الكمية المشتراة:</label><input type="number" id="edit_inv_add_qty" class="form-control"><label style="font-weight:bold; font-size:12px;">التكلفة الإجمالية:</label><input type="number" id="edit_inv_add_cost" class="form-control"><button class="btn-action" onclick="saveInvEdit()" style="width:100%;">تأكيد</button></div></div>
     <div id="modal_inv_withdraw" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-minus-circle"></i> سحب رصيد</h3><h4 id="withdraw_inv_name_display" style="text-align:center;"></h4><input type="hidden" id="withdraw_inv_id"><input type="number" id="withdraw_inv_qty" class="form-control" placeholder="الكمية..."><button class="btn-action" onclick="saveInvWithdraw()" style="width:100%; background:var(--secondary); color:black;">تأكيد السحب</button></div></div>
-    <div id="modal_custom_supplier" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--primary);"><i class="fas fa-truck"></i> إضافة مورد جديد</h3><input type="text" id="cs_name" class="form-control" placeholder="اسم المورد (ضروري)..."><input type="text" id="cs_phone" class="form-control" placeholder="رقم التليفون..."><input type="text" id="cs_supplies" class="form-control" placeholder="بيورد إيه؟..."><button class="btn-action" onclick="confirmAddSupplier()" style="width:100%">حفظ المورد</button></div></div>
     <div id="modal_exp" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>تسجيل مصروف</h3><select id="new_exp_cat" class="form-control" onchange="toggleSupplierSelect()"><option value="بضاعة ومشتريات">بضاعة ومشتريات</option><option value="صيانة وأعطال">صيانة وأعطال</option><option value="فواتير (كهرباء/مياه)">فواتير (كهرباء/مياه)</option><option value="نثريات وضيافة">نثريات أخرى</option></select><select id="new_exp_supplier" class="form-control" style="display:none;"><option value="">-- المورد --</option></select><input type="text" id="new_exp_title" placeholder="اكتب تفاصيل المصروف..." class="form-control"><input type="number" id="new_exp_val" placeholder="المبلغ" class="form-control"><button class="btn-action" onclick="saveExpense()" style="width:100%">تسجيل</button></div></div>
     <div id="modal_staff" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>بيانات الموظف</h3><input type="text" id="staff_name" placeholder="الاسم" class="form-control"><input type="text" id="staff_job" placeholder="الوظيفة" class="form-control"><input type="number" id="staff_salary" placeholder="الراتب الأساسي" class="form-control"><button class="btn-action" onclick="saveStaff()" style="width:100%">حفظ</button></div></div>
     <div id="modal_staff_action" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 id="staff_action_title">تسجيل حركة</h3><input type="hidden" id="staff_action_id"><select id="staff_action_type" class="form-control" onchange="handleStaffActionChange()"><option value="advance">سلفة</option><option value="deduction">خصم</option><option value="absence">غياب</option><option value="bonus">مكافأة</option><option value="salary">صرف الراتب</option></select><input type="number" id="staff_action_amount" placeholder="المبلغ" class="form-control"><input type="text" id="staff_action_note" placeholder="ملاحظات..." class="form-control"><button class="btn-action" onclick="saveStaffAction()" style="width:100%">تأكيد</button></div></div>
@@ -806,7 +805,30 @@ function saveRecipe(){const pid=document.getElementById('recipeProdSelect').valu
 
 /* ================== المالية والموردين والمصروفات ================== */
 function toggleSupplierSelect() { const cat = document.getElementById('new_exp_cat').value; const supSelect = document.getElementById('new_exp_supplier'); if(cat === 'بضاعة ومشتريات' || cat === 'صيانة وأعطال') { supSelect.style.display = 'block'; } else { supSelect.style.display = 'none'; supSelect.value = ''; } }
-function saveSupplier() { const n = document.getElementById('new_sup_name').value; const p = document.getElementById('new_sup_phone').value; const d = document.getElementById('new_sup_desc').value; if(!n) return alert("ادخل اسم المورد"); const sups = DB.getData(DB.keys.suppliers) || []; sups.push({id: Date.now(), name: n, phone: p, desc: d}); DB.saveData(DB.keys.suppliers, sups); closeModal(); renderFinance(); updateSupplierDropdown(); alert('تم إضافة المورد بنجاح ✅'); }
+function saveSupplier() {
+    const n = document.getElementById('new_sup_name');
+    const p = document.getElementById('new_sup_phone');
+    const d = document.getElementById('new_sup_desc');
+    
+    if(!n || !n.value.trim()) return alert("يا مدير، لازم تكتب اسم المورد الأول!"); 
+    
+    const sups = DB.getData(DB.keys.suppliers) || []; 
+    sups.push({
+        id: Date.now(), 
+        name: n.value, 
+        phone: p ? p.value : '-', 
+        desc: d ? d.value : '-'
+    }); 
+    
+    DB.saveData(DB.keys.suppliers, sups); 
+    
+    // تفريغ الخانات عشان المرة الجاية
+    if(n) n.value = ''; if(p) p.value = ''; if(d) d.value = '';
+    
+    closeModal(); 
+    try { renderFinance(); updateSupplierDropdown(); } catch(e){}
+    alert('تم إضافة المورد بنجاح في الأجندة ✅');
+}
 function updateSupplierDropdown() { const sups = DB.getData(DB.keys.suppliers) || []; const sel = document.getElementById('new_exp_supplier'); if(!sel) return; sel.innerHTML = '<option value="">-- اختر المورد (اختياري) --</option>' + sups.map(s => `<option value="${s.name}">${s.name} (${s.desc})</option>`).join(''); }
 function saveExpense(){ const cat = document.getElementById('new_exp_cat').value; const sup = document.getElementById('new_exp_supplier').value; let t = document.getElementById('new_exp_title').value; const a = safeNum(document.getElementById('new_exp_val').value); if(a<=0) return; if(sup) t = t ? `${t} - للمورد: ${sup}` : `دفعة للمورد: ${sup}`; const ex = DB.getData(DB.keys.exp); ex.push({id:Date.now(),date:new Date().toISOString(),category: cat, title:t,amount:a}); DB.saveData(DB.keys.exp,ex); closeModal(); renderExpenses(); try{renderFinance();}catch(e){} try{updateDashboard();}catch(e){} }
 function renderExpenses(){
