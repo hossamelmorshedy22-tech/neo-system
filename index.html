@@ -794,17 +794,31 @@ database.ref('NeoCafe/online_orders').on('child_added', snap => {
     let order = snap.val(); let key = snap.key;
     let tId = isNaN(order.table) ? order.table : Number(order.table);
     if(!tablesOrder[tId]) tablesOrder[tId] = [];
-    order.items.forEach(i => { i.sentToKDS = true; tablesOrder[tId].push(i); });
+    
+    // تأمين الختم عشان ميروحش المطبخ تاني وقت الطباعة
+    let itemsToSend = [];
+    order.items.forEach(i => { 
+        let newItem = { ...i, sentToKDS: true }; // ختم النار الإجباري
+        tablesOrder[tId].push(newItem); 
+        itemsToSend.push(newItem);
+    });
     saveTables(); 
+    
     if(order.customerPhone) { tablesMeta[tId] = { phone: order.customerPhone, name: order.customerName || '' }; saveTablesMeta(); }
     let tName = LAYOUT.find(x => x.id == tId)?.label || tId;
-    sendToKitchen(Date.now(), tName + " (أونلاين)", order.items, new Date().toISOString());
+    
+    // إرسال للمطبخ مرة واحدة فقط
+    sendToKitchen(Date.now(), tName + " (أونلاين)", itemsToSend, new Date().toISOString());
     database.ref('NeoCafe/online_orders/' + key).remove();
+    
     if(currentRole === 'admin' || currentRole === 'cashier') {
         if(document.getElementById('pos').classList.contains('active')) { renderMap(); if(currentTable==tId) renderCart(); }
+        let cInfo = order.customerName ? `\nالاسم: ${order.customerName}` : '';
+        let pInfo = order.customerPhone ? `\nالموبايل: ${order.customerPhone}` : '';
+        
         let audio = document.getElementById('orderAlertSound');
         if(audio) { audio.currentTime = 0; let playPromise = audio.play(); if (playPromise !== undefined) { playPromise.catch(e => console.log("الصوت محتاج تفاعل")); } }
-        setTimeout(() => { alert('🔔 أوردر أونلاين جديد من: ' + tName); }, 6000);
+        setTimeout(() => { alert('🔔 أوردر أونلاين جديد من: ' + tName + cInfo + pInfo); }, 1500);
     }
 });
 
@@ -873,14 +887,22 @@ function addToCart(id, n, p) {
 function confirmCoffee() { const type = document.getElementById('coffee_type').value; const roast = document.getElementById('coffee_roast').value; const sugar = document.getElementById('coffee_sugar').value; let extraText = tempCoffeeItem.type === 'turkish' ? ` (${type}-${roast}-سكر ${sugar})` : ` (سكر ${sugar})`; const fullName = tempCoffeeItem.n + extraText; _addItemToCart(tempCoffeeItem.id, fullName, tempCoffeeItem.p); closeModal(); }
 function _addItemToCart(id, name, price){ if(!tablesOrder[currentTable]) tablesOrder[currentTable]=[]; const existing = tablesOrder[currentTable].find(x => x.name === name && !x.sentToKDS); if(existing) existing.qty++; else tablesOrder[currentTable].push({id, name, price, qty:1, sentToKDS: false}); saveTables(); renderCart(); renderMap(); }
 
-function sendCurrentTableToKitchen() {
-    if(!currentTable||!tablesOrder[currentTable]?.length) return alert('الترابيزة فاضية!');
-    let unsentItems = tablesOrder[currentTable].filter(i => !i.sentToKDS);
-    if(unsentItems.length === 0) return alert('كل الطلبات دي اتبعتت للمطبخ قبل كده! 🔥');
-    sendToKitchen(Date.now(), tableName(currentTable), unsentItems, new Date().toISOString());
-    tablesOrder[currentTable].forEach(i => i.sentToKDS = true);
+function modQty(x, d) {
+    let item = tablesOrder[currentTable][x];
+    if (d > 0) {
+        if (item.sentToKDS) {
+            // لو الأوردر راح المطبخ والكاشير داس (+)، السيستم هيعمل سطر جديد من غير نار عشان يروح المطبخ
+            tablesOrder[currentTable].push({ id: item.id, name: item.name, price: item.price, qty: 1, sentToKDS: false });
+        } else {
+            item.qty += d;
+        }
+    } else {
+        item.qty += d;
+        if (item.qty <= 0) tablesOrder[currentTable].splice(x, 1);
+    }
     saveTables(); renderCart(); renderMap();
 }
+
 function renderCart(){
     const c=document.getElementById('cartItems'); if(!currentTable||!tablesOrder[currentTable]||!tablesOrder[currentTable].length){ c.innerHTML='<div style="text-align:center;color:#bdc3c7;margin-top:40px"><i class="fas fa-receipt" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد طلبات</div>'; document.getElementById('cartTotal').textContent="0.00 ج"; return; }
     let s=0; c.innerHTML=tablesOrder[currentTable].map((i,x)=>{ s+=i.price*i.qty; let fireIcon = i.sentToKDS ? '<i class="fas fa-fire" style="color:#e74c3c; font-size:12px; margin-right:8px;" title="في المطبخ"></i>' : ''; return`<div class="cart-item"><div class="item-info">${i.name} ${fireIcon}</div><div class="qty-controls"><button class="qty-btn dec" onclick="modQty(${x},-1)">-</button><span>${i.qty}</span><button class="qty-btn inc" onclick="modQty(${x},1)">+</button></div><div class="item-total">${i.price*i.qty} ج</div></div>`; }).join('');
@@ -931,18 +953,47 @@ function executeGenericAction() {
 
 function processCheckout(type, print, custName = ""){
     if(!currentTable||!tablesOrder[currentTable]?.length)return;
-    const cart=tablesOrder[currentTable],sub=cart.reduce((a,b)=>a+(b.price*b.qty),0); const di=document.getElementById('cartDiscount'),disc=di&&di.value?parseFloat(di.value):0; const ti=document.getElementById('cartTips'),tips=ti&&ti.value?parseFloat(ti.value):0;
+    const cart=tablesOrder[currentTable],sub=cart.reduce((a,b)=>a+(b.price*b.qty),0);
+    const di=document.getElementById('cartDiscount'),disc=di&&di.value?parseFloat(di.value):0; 
+    const ti=document.getElementById('cartTips'),tips=ti&&ti.value?parseFloat(ti.value):0;
+    
     let total=(sub-disc)+tips; if(total<0)total=0;
+    
     const now=new Date(); const id=Date.now(); const rec=DB.getData(DB.keys.recipes); const inv=DB.getData(DB.keys.inv); let cost=0;
     cart.forEach(i=>{const r=rec[i.id];if(r)r.forEach(g=>{const s=inv.find(x=>x.id===g.invId);if(s){s.stock-=g.qty*i.qty;cost+=s.avgCost*g.qty*i.qty;}});});DB.saveData(DB.keys.inv,inv);
     
-    const phone = document.getElementById('loyaltyPhoneInput')?.value; const cName = document.getElementById('loyaltyNameInput')?.value || "عميل مميز"; let finalPoints = 0;
-    if(phone && phone.trim() !== '') { const pts = Math.floor(total / 10); let loy = DB.getData(DB.keys.loyalty); let user = loy.find(x => x.phone === phone); if(user) { user.points += pts; user.name = cName; finalPoints = user.points; } else { loy.push({phone, name: cName, points: pts}); finalPoints = pts; } DB.saveData(DB.keys.loyalty, loy); }
+    const phone = document.getElementById('loyaltyPhoneInput')?.value; 
+    const cName = document.getElementById('loyaltyNameInput')?.value || "عميل مميز";
+    let finalPoints = 0;
 
-    let profitWithoutTips = (sub-disc) - cost; let unsentItems = cart.filter(i => !i.sentToKDS);
-    if(['cash','vodafone','insta','visa'].includes(type)){ const s=DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:cart,subTotal:sub,discount:disc,tips:tips,total,cost,profit:profitWithoutTips,type:'sale',method:type}); DB.saveData(DB.keys.sales,s); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); } 
-    else if(type==='credit'){ const d=DB.getData(DB.keys.debts); d.push({id,date:now.toISOString(),customer:custName,items:cart,amount:total,status:'unpaid'}); DB.saveData(DB.keys.debts,d); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); renderDebts(); alert('تم ترحيل الأوردر للآجل ✅'); } 
-    else if(type==='hospitality'){ const h=DB.getData(DB.keys.hospitality); h.push({id,date:now.toISOString(),reason:custName,items:cart,cost,lostRevenue:total}); DB.saveData(DB.keys.hospitality,h); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); renderDebts(); alert('تم تسجيل الأوردر كضيافة ✅'); }
+    if(phone && phone.trim() !== '') {
+        const pts = Math.floor(total / 10); let loy = DB.getData(DB.keys.loyalty); let user = loy.find(x => x.phone === phone);
+        if(user) { user.points += pts; user.name = cName; finalPoints = user.points; } else { loy.push({phone, name: cName, points: pts}); finalPoints = pts; }
+        DB.saveData(DB.keys.loyalty, loy); 
+    }
+
+    let profitWithoutTips = (sub-disc) - cost;
+    
+    // فلتر الأمان القوي
+    let unsentItems = cart.filter(i => i.sentToKDS === false || i.sentToKDS === undefined);
+
+    if(['cash','vodafone','insta','visa'].includes(type)){ 
+        const s=DB.getData(DB.keys.sales); 
+        s.push({id,date:now.toISOString(),items:cart,subTotal:sub,discount:disc,tips:tips,total,cost,profit:profitWithoutTips,type:'sale',method:type}); DB.saveData(DB.keys.sales,s); 
+        if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); 
+    } 
+    else if(type==='credit'){ 
+        const d=DB.getData(DB.keys.debts); 
+        d.push({id,date:now.toISOString(),customer:custName,items:cart,amount:total,status:'unpaid'}); DB.saveData(DB.keys.debts,d); 
+        if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); 
+        renderDebts(); alert('تم ترحيل الأوردر للآجل ✅'); 
+    } 
+    else if(type==='hospitality'){ 
+        const h=DB.getData(DB.keys.hospitality); 
+        h.push({id,date:now.toISOString(),reason:custName,items:cart,cost,lostRevenue:total}); DB.saveData(DB.keys.hospitality,h); 
+        if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); 
+        renderDebts(); alert('تم تسجيل الأوردر كضيافة ✅'); 
+    }
 
     if(print && ['cash','vodafone','insta','visa'].includes(type)){
         document.getElementById('p_date').textContent=now.toLocaleDateString('ar-EG'); document.getElementById('p_time').textContent=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}); document.getElementById('p_id').textContent=id.toString().slice(-6); document.getElementById('p_table').textContent=tableName(currentTable);
@@ -956,9 +1007,9 @@ function processCheckout(type, print, custName = ""){
         setTimeout(()=>{window.print();},250);
     }
     
-    tablesOrder[currentTable]=[]; delete tablesMeta[currentTable]; saveTablesMeta(); if(di)di.value=0; if(ti)ti.value=0; saveTables();renderCart();renderMap();updateDashboard(); checkStockAlerts(); renderLoyalty(); renderFinance(); closeModal();
+    tablesOrder[currentTable]=[]; delete tablesMeta[currentTable]; saveTablesMeta();
+    if(di)di.value=0; if(ti)ti.value=0; saveTables();renderCart();renderMap();updateDashboard(); checkStockAlerts(); renderLoyalty(); renderFinance(); closeModal();
 }
-function tableName(id){const t=LAYOUT.find(x=>x.id==id);return t?t.label:id;}
 
 /* ================== كود تقسيم الفاتورة المتقدم ================== */
 let splitSelection = [];
@@ -979,14 +1030,25 @@ function modSplitQty(idx, d) { let item = splitSelection[idx]; let newQty = item
 function processSplitCheckout(method) {
     let itemsToPay = splitSelection.filter(i => i.selectedQty > 0).map(i => ({id: i.id, name: i.name, price: i.price, qty: i.selectedQty, sentToKDS: i.sentToKDS}));
     if(itemsToPay.length === 0) return alert('لم تقم باختيار أي أصناف للدفع!');
-    let subTotal = itemsToPay.reduce((a,b) => a + (b.price * b.qty), 0); let now = new Date(); let id = Date.now(); let cost = 0;
+    
+    let subTotal = itemsToPay.reduce((a,b) => a + (b.price * b.qty), 0);
+    let now = new Date(); let id = Date.now(); let cost = 0;
     const rec=DB.getData(DB.keys.recipes); const inv=DB.getData(DB.keys.inv);
+    
     itemsToPay.forEach(i=>{const r=rec[i.id];if(r)r.forEach(g=>{const s=inv.find(x=>x.id===g.invId);if(s){s.stock-=g.qty*i.qty;cost+=s.avgCost*g.qty*i.qty;}});}); DB.saveData(DB.keys.inv,inv);
-    let s = DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:itemsToPay,subTotal:subTotal,discount:0,tips:0,total:subTotal,cost,profit:subTotal-cost,type:'sale',method:method}); DB.saveData(DB.keys.sales, s);
-    let unsentSplit = itemsToPay.filter(i => !i.sentToKDS); if(unsentSplit.length > 0) sendToKitchen(id, tableName(currentTable) + " (منفصل)", unsentSplit, now.toISOString());
+    
+    let s = DB.getData(DB.keys.sales);
+    s.push({id,date:now.toISOString(),items:itemsToPay,subTotal:subTotal,discount:0,tips:0,total:subTotal,cost,profit:subTotal-cost,type:'sale',method:method}); DB.saveData(DB.keys.sales, s);
+    
+    // فلتر الأمان القوي للتقسيم
+    let unsentSplit = itemsToPay.filter(i => i.sentToKDS === false || i.sentToKDS === undefined);
+    if(unsentSplit.length > 0) sendToKitchen(id, tableName(currentTable) + " (منفصل)", unsentSplit, now.toISOString());
+    
     splitSelection.forEach((item, idx) => { if(item.selectedQty > 0) { tablesOrder[currentTable][idx].qty -= item.selectedQty; } });
     tablesOrder[currentTable] = tablesOrder[currentTable].filter(i => i.qty > 0); if(tablesOrder[currentTable].length === 0) { delete tablesMeta[currentTable]; saveTablesMeta(); }
+    
     saveTables(); renderCart(); renderMap(); updateDashboard(); renderFinance();
+    
     document.getElementById('p_date').textContent=now.toLocaleDateString('ar-EG'); document.getElementById('p_time').textContent=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}); document.getElementById('p_id').textContent=id.toString().slice(-6); document.getElementById('p_table').textContent=tableName(currentTable) + " (منفصل)";
     let mTxt=method==='vodafone'?'فودافون كاش':(method==='insta'?'انستا باي':(method==='visa'?'فيزا':'كاش')); document.getElementById('p_items').innerHTML=itemsToPay.map(i=>`<tr><td>${i.name}</td><td>${i.price}</td><td>${i.qty}</td><td>${i.price*i.qty}</td></tr>`).join(''); document.getElementById('p_subtotal').textContent=subTotal.toFixed(2); document.getElementById('p_discount_row').style.display='none'; document.getElementById('p_tips_row').style.display='none'; document.getElementById('p_total').textContent=subTotal.toFixed(2); document.getElementById('p_method').textContent=mTxt;
     setTimeout(()=>{window.print(); closeModal();},250);
