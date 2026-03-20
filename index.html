@@ -485,7 +485,6 @@
     <div class="r-footer"><span class="welcome-text">نورتنا يا رايق ❤️</span><span class="powered-by">Powered by: Neo Cafe</span></div>
 </div>
 <script>
-// دالة لتحويل القيم بأمان عشان نمنع أي خطأ (NaN) يعلق السيستم
 function safeNum(v) { let n = parseFloat(v); return isNaN(n) ? 0 : n; }
 
 const DB = {
@@ -499,7 +498,6 @@ const DB = {
 let tablesMeta = JSON.parse(localStorage.getItem('neo_tables_meta_v1')) || {};
 function saveTablesMeta() { localStorage.setItem('neo_tables_meta_v1', JSON.stringify(tablesMeta)); }
 
-// لو المنيو ممسوح هينزل المنيو ده مؤقتاً لحد ما تضيف أصنافك من جديد
 let MENU = JSON.parse(localStorage.getItem('neo_live_menu_v1')) || {
     hot:{title:'☕ ساخن',items:[{id:'h1',name:'شاي',price:15}]},
     cold:{title:'🧊 بارد',isComplex:true,subcats:[{title:'ميلك شيك',items:[{id:'ms1',name:'ميلك شيك فانيلا',price:50}]}]}
@@ -526,10 +524,12 @@ database.ref('NeoCafe/neo_kitchen_v1').on('value', snap => { if(snap.exists()) {
 database.ref('NeoCafe/online_orders').on('child_added', snap => {
     let order = snap.val(); let key = snap.key; let tId = isNaN(order.table) ? order.table : Number(order.table);
     if(!tablesOrder[tId]) tablesOrder[tId] = [];
-    let itemsToSend = []; order.items.forEach(i => { let newItem = { ...i, sentToKDS: true }; tablesOrder[tId].push(newItem); itemsToSend.push(newItem); });
+    let kdsId = Date.now();
+    let itemsToSend = []; 
+    order.items.forEach(i => { let newItem = { ...i, kdsId: kdsId, kdsStatus: 'pending' }; tablesOrder[tId].push(newItem); itemsToSend.push(newItem); });
     saveTables(); if(order.customerPhone) { tablesMeta[tId] = { phone: order.customerPhone, name: order.customerName || '' }; saveTablesMeta(); }
     let tName = LAYOUT.find(x => x.id == tId)?.label || tId;
-    sendToKitchen(Date.now(), tName + " (أونلاين)", itemsToSend, new Date().toISOString());
+    sendToKitchen(kdsId, tName + " (أونلاين)", itemsToSend, new Date().toISOString());
     database.ref('NeoCafe/online_orders/' + key).remove();
     if(currentRole === 'admin' || currentRole === 'cashier') {
         if(document.getElementById('pos').classList.contains('active')) { renderMap(); if(currentTable==tId) renderCart(); }
@@ -601,27 +601,38 @@ function addToCart(id, n, p) {
     else { _addItemToCart(id, n, p); }
 }
 function confirmCoffee() { const type = document.getElementById('coffee_type').value; const roast = document.getElementById('coffee_roast').value; const sugar = document.getElementById('coffee_sugar').value; let extraText = tempCoffeeItem.type === 'turkish' ? ` (${type}-${roast}-سكر ${sugar})` : ` (سكر ${sugar})`; const fullName = tempCoffeeItem.n + extraText; _addItemToCart(tempCoffeeItem.id, fullName, tempCoffeeItem.p); closeModal(); }
-function _addItemToCart(id, name, price){ if(!tablesOrder[currentTable]) tablesOrder[currentTable]=[]; const existing = tablesOrder[currentTable].find(x => x.name === name && !x.sentToKDS); if(existing) existing.qty++; else tablesOrder[currentTable].push({id, name, price, qty:1, sentToKDS: false}); saveTables(); renderCart(); renderMap(); }
+function _addItemToCart(id, name, price){ if(!tablesOrder[currentTable]) tablesOrder[currentTable]=[]; const existing = tablesOrder[currentTable].find(x => x.name === name && !x.kdsStatus); if(existing) existing.qty++; else tablesOrder[currentTable].push({id, name, price, qty:1}); saveTables(); renderCart(); renderMap(); }
 
 function sendCurrentTableToKitchen() {
     if(!currentTable||!tablesOrder[currentTable]?.length) return alert('الترابيزة فاضية!');
-    let unsentItems = tablesOrder[currentTable].filter(i => i.sentToKDS === false || i.sentToKDS === undefined);
+    let unsentItems = tablesOrder[currentTable].filter(i => !i.kdsStatus);
     if(unsentItems.length === 0) return alert('كل الطلبات دي اتبعتت للمطبخ قبل كده! 🔥');
-    sendToKitchen(Date.now(), tableName(currentTable), unsentItems, new Date().toISOString());
-    tablesOrder[currentTable].forEach(i => i.sentToKDS = true);
+    let kdsId = Date.now();
+    sendToKitchen(kdsId, tableName(currentTable), unsentItems, new Date().toISOString());
+    tablesOrder[currentTable].forEach(i => { if(!i.kdsStatus) { i.kdsId = kdsId; i.kdsStatus = 'pending'; } });
     saveTables(); renderCart(); renderMap();
 }
 
 function renderCart(){
     const c=document.getElementById('cartItems'); if(!currentTable||!tablesOrder[currentTable]||!tablesOrder[currentTable].length){ c.innerHTML='<div style="text-align:center;color:#bdc3c7;margin-top:40px"><i class="fas fa-receipt" style="font-size:40px;margin-bottom:10px"></i><br>لا توجد طلبات</div>'; document.getElementById('cartTotal').textContent="0.00 ج"; return; }
-    let s=0; c.innerHTML=tablesOrder[currentTable].map((i,x)=>{ s+=safeNum(i.price)*safeNum(i.qty); let fireIcon = i.sentToKDS ? '<i class="fas fa-fire" style="color:#e74c3c; font-size:12px; margin-right:8px;" title="في المطبخ"></i>' : ''; return`<div class="cart-item"><div class="item-info">${i.name} ${fireIcon}</div><div class="qty-controls"><button class="qty-btn dec" onclick="modQty(${x},-1)">-</button><span>${i.qty}</span><button class="qty-btn inc" onclick="modQty(${x},1)">+</button></div><div class="item-total">${safeNum(i.price)*safeNum(i.qty)} ج</div></div>`; }).join('');
+    let s=0; c.innerHTML=tablesOrder[currentTable].map((i,x)=>{ 
+        s+=safeNum(i.price)*safeNum(i.qty); 
+        let kdsIcon = '';
+        if(i.kdsStatus === 'pending') kdsIcon = '<i class="fas fa-fire" style="color:#e74c3c; font-size:12px; margin-right:8px;" title="جاري التجهيز بالمطبخ"></i>';
+        if(i.kdsStatus === 'ready') kdsIcon = '<i class="fas fa-check-circle" style="color:#27ae60; font-size:12px; margin-right:8px;" title="جاهز للتقديم ✅"></i>';
+        return`<div class="cart-item"><div class="item-info">${i.name} ${kdsIcon}</div><div class="qty-controls"><button class="qty-btn dec" onclick="modQty(${x},-1)">-</button><span>${i.qty}</span><button class="qty-btn inc" onclick="modQty(${x},1)">+</button></div><div class="item-total">${safeNum(i.price)*safeNum(i.qty)} ج</div></div>`; 
+    }).join('');
     const di=document.getElementById('cartDiscount'), d=di&&di.value?safeNum(di.value):0; const ti=document.getElementById('cartTips'), t=ti&&ti.value?safeNum(ti.value):0; let f=(s-d)+t; if(f<0)f=0; document.getElementById('cartTotal').textContent=f.toFixed(2)+" ج";
 }
 
 function modQty(x, d) {
     let item = tablesOrder[currentTable][x];
-    if (d > 0) { if (item.sentToKDS) { tablesOrder[currentTable].push({ id: item.id, name: item.name, price: item.price, qty: 1, sentToKDS: false }); } else { item.qty += d; } } 
-    else { item.qty += d; if (item.qty <= 0) tablesOrder[currentTable].splice(x, 1); }
+    if (d > 0) { 
+        if (item.kdsStatus) { tablesOrder[currentTable].push({ id: item.id, name: item.name, price: item.price, qty: 1 }); } 
+        else { item.qty += d; } 
+    } else { 
+        item.qty += d; if (item.qty <= 0) tablesOrder[currentTable].splice(x, 1); 
+    }
     saveTables(); renderCart(); renderMap();
 }
 
@@ -666,7 +677,9 @@ function processCheckout(type, print, custName = ""){
         const phone = document.getElementById('loyaltyPhoneInput')?.value; const cName = document.getElementById('loyaltyNameInput')?.value || "عميل مميز"; let finalPoints = 0;
         if(phone && phone.trim() !== '') { const pts = Math.floor(total / 10); let loy = DB.getData(DB.keys.loyalty); let user = loy.find(x => x.phone === phone); if(user) { user.points += pts; user.name = cName; finalPoints = user.points; } else { loy.push({phone, name: cName, points: pts}); finalPoints = pts; } DB.saveData(DB.keys.loyalty, loy); }
 
-        let profitWithoutTips = (sub-disc) - cost; let unsentItems = cart.filter(i => i.sentToKDS === false || i.sentToKDS === undefined);
+        let profitWithoutTips = (sub-disc) - cost; 
+        let unsentItems = cart.filter(i => !i.kdsStatus);
+        
         if(['cash','vodafone','insta','visa'].includes(type)){ const s=DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:cart,subTotal:sub,discount:disc,tips:tips,total,cost,profit:profitWithoutTips,type:'sale',method:type}); DB.saveData(DB.keys.sales,s); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); } 
         else if(type==='credit'){ const d=DB.getData(DB.keys.debts); d.push({id,date:now.toISOString(),customer:custName,items:cart,amount:total,status:'unpaid'}); DB.saveData(DB.keys.debts,d); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); try{renderDebts();}catch(e){} alert('تم ترحيل الأوردر للآجل ✅'); } 
         else if(type==='hospitality'){ const h=DB.getData(DB.keys.hospitality); h.push({id,date:now.toISOString(),reason:custName,items:cart,cost,lostRevenue:total}); DB.saveData(DB.keys.hospitality,h); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); try{renderDebts();}catch(e){} alert('تم تسجيل الأوردر كضيافة ✅'); }
@@ -699,15 +712,17 @@ function renderSplitUI() {
     let html = ''; let splitTotal = 0;
     splitSelection.forEach((item, idx) => {
         splitTotal += safeNum(item.price) * item.selectedQty;
-        let fireIcon = item.sentToKDS ? '<i class="fas fa-fire" style="color:#e74c3c; font-size:12px; margin-right:8px;" title="في المطبخ"></i>' : '';
-        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px dashed #ccc;"><div style="flex:2; font-weight:bold; font-size: 14px;">${item.name} ${fireIcon}<br><small style="color:#e74c3c;">(المتاح بالترابيزة: ${item.qty - item.selectedQty})</small></div><div style="display:flex; align-items:center; gap:10px;"><button class="btn-action" style="padding:4px 12px; background:#e74c3c; border-radius:6px;" onclick="modSplitQty(${idx}, -1)">-</button><span style="font-weight:900; font-size:18px; width:20px; text-align:center; display:inline-block;">${item.selectedQty}</span><button class="btn-action" style="padding:4px 12px; background:#27ae60; border-radius:6px;" onclick="modSplitQty(${idx}, 1)">+</button></div><div style="flex:1; text-align:left; font-weight:900; color:var(--primary); font-size:15px;">${safeNum(item.price) * item.selectedQty} ج</div></div>`;
+        let kdsIcon = '';
+        if(item.kdsStatus === 'pending') kdsIcon = '<i class="fas fa-fire" style="color:#e74c3c; font-size:12px; margin-right:8px;" title="في المطبخ"></i>';
+        if(item.kdsStatus === 'ready') kdsIcon = '<i class="fas fa-check-circle" style="color:#27ae60; font-size:12px; margin-right:8px;" title="جاهز ✅"></i>';
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px dashed #ccc;"><div style="flex:2; font-weight:bold; font-size: 14px;">${item.name} ${kdsIcon}<br><small style="color:#e74c3c;">(المتاح بالترابيزة: ${item.qty - item.selectedQty})</small></div><div style="display:flex; align-items:center; gap:10px;"><button class="btn-action" style="padding:4px 12px; background:#e74c3c; border-radius:6px;" onclick="modSplitQty(${idx}, -1)">-</button><span style="font-weight:900; font-size:18px; width:20px; text-align:center; display:inline-block;">${item.selectedQty}</span><button class="btn-action" style="padding:4px 12px; background:#27ae60; border-radius:6px;" onclick="modSplitQty(${idx}, 1)">+</button></div><div style="flex:1; text-align:left; font-weight:900; color:var(--primary); font-size:15px;">${safeNum(item.price) * item.selectedQty} ج</div></div>`;
     });
     document.getElementById('split_items_container').innerHTML = html; document.getElementById('split_total_val').innerText = splitTotal + ' ج';
 }
 function modSplitQty(idx, d) { let item = splitSelection[idx]; let newQty = item.selectedQty + d; if(newQty >= 0 && newQty <= item.qty) { item.selectedQty = newQty; renderSplitUI(); } }
 function processSplitCheckout(method) {
     try {
-        let itemsToPay = splitSelection.filter(i => i.selectedQty > 0).map(i => ({id: i.id, name: i.name, price: i.price, qty: i.selectedQty, sentToKDS: i.sentToKDS}));
+        let itemsToPay = splitSelection.filter(i => i.selectedQty > 0).map(i => ({id: i.id, name: i.name, price: i.price, qty: i.selectedQty, kdsStatus: i.kdsStatus, kdsId: i.kdsId}));
         if(itemsToPay.length === 0) return alert('لم تقم باختيار أي أصناف للدفع!');
         let subTotal = itemsToPay.reduce((a,b) => a + (safeNum(b.price) * safeNum(b.qty)), 0); let now = new Date(); let id = Date.now(); let cost = 0;
         const rec=DB.getData(DB.keys.recipes); const inv=DB.getData(DB.keys.inv);
@@ -715,7 +730,9 @@ function processSplitCheckout(method) {
         
         let s = DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:itemsToPay,subTotal:subTotal,discount:0,tips:0,total:subTotal,cost,profit:subTotal-cost,type:'sale',method:method}); DB.saveData(DB.keys.sales, s);
         
-        let unsentSplit = itemsToPay.filter(i => i.sentToKDS === false || i.sentToKDS === undefined); if(unsentSplit.length > 0) sendToKitchen(id, tableName(currentTable) + " (منفصل)", unsentSplit, now.toISOString());
+        let unsentSplit = itemsToPay.filter(i => !i.kdsStatus); 
+        if(unsentSplit.length > 0) sendToKitchen(id, tableName(currentTable) + " (منفصل)", unsentSplit, now.toISOString());
+        
         splitSelection.forEach((item, idx) => { if(item.selectedQty > 0) { tablesOrder[currentTable][idx].qty -= item.selectedQty; } });
         tablesOrder[currentTable] = tablesOrder[currentTable].filter(i => i.qty > 0); if(tablesOrder[currentTable].length === 0) { delete tablesMeta[currentTable]; saveTablesMeta(); }
         saveTables(); renderCart(); renderMap(); try{updateDashboard();}catch(e){} try{renderFinance();}catch(e){}
@@ -866,7 +883,21 @@ function genReport() {
 function sendToKitchen(id,t,i,tm){const k=DB.getData(DB.keys.kitchen);k.push({id,table:t,items:i,orderTime:tm,status:'pending'});DB.saveData(DB.keys.kitchen,k);}
 function renderKitchen(){ const o=DB.getData(DB.keys.kitchen).filter(x=>x.status==='pending'); document.getElementById('kitchenOrders').innerHTML=o.length?o.map(x=>{ let orderDate; if (x.orderTime) { orderDate = new Date(x.orderTime); if (isNaN(orderDate.getTime())) orderDate = new Date(parseInt(x.orderTime)); if (isNaN(orderDate.getTime())) orderDate = new Date(); } else { orderDate = new Date(); } const timeString = orderDate.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}); const diffMs = Date.now() - orderDate.getTime(); const m = Math.max(0, Math.floor(diffMs / 60000)); let statusClass = m > 15 ? 'urgent' : (m > 5 ? 'ok' : ''); return`<div class="kds-card ${statusClass}"><div class="kds-card-header"><span>${x.table}</span><div class="kds-time-container"><span class="kds-time-badge">${m} دقيقة</span><span class="kds-clock">⏰ ${timeString}</span></div></div><div style="flex:1; margin-top:10px;">${x.items.map(i=>`<div class="kds-item"><span>${i.name}</span><span class="kds-qty">x${i.qty}</span></div>`).join('')}</div><button class="kds-btn" onclick="finishOrder(${x.id})"><i class="fas fa-check-circle"></i> تم التجهيز</button></div>`; }).join(''):'<div style="text-align:center;color:#999;grid-column:1/-1;padding:50px;font-weight:bold;font-size:24px;">لا توجد طلبات جديدة ✅</div>'; }
 setInterval(() => { if(document.getElementById('kitchen').classList.contains('active')) renderKitchen(); }, 60000);
-function finishOrder(id){const k=DB.getData(DB.keys.kitchen),o=k.find(x=>x.id===id);if(o){o.status='done';DB.saveData(DB.keys.kitchen,k);renderKitchen();}}
+
+// الدالة السحرية لتأكيد استلام المطبخ للأوردر وظهور الصح الأخضر في الكاشير
+function finishOrder(id){
+    const k=DB.getData(DB.keys.kitchen), o=k.find(x=>x.id===id);
+    if(o){
+        o.status='done'; DB.saveData(DB.keys.kitchen,k); renderKitchen();
+        let changed = false;
+        for(let t in tablesOrder) {
+            tablesOrder[t].forEach(item => {
+                if(item.kdsId === id) { item.kdsStatus = 'ready'; changed = true; }
+            });
+        }
+        if(changed) { saveTables(); if(document.getElementById('pos').classList.contains('active')) { renderCart(); renderMap(); } }
+    }
+}
 
 function renderDebts(){
     const d=DB.getData(DB.keys.debts).filter(x=>x.status==='unpaid'),t=document.getElementById('debtSearch').value.toLowerCase();
@@ -930,7 +961,7 @@ setTimeout(() => {
     let discountInputs = document.querySelectorAll('input[type="number"]');
     let targetInput = Array.from(discountInputs).find(input => input.id && input.id.includes('cartTips'));
     if(targetInput && !document.getElementById('orderNoteInput')) {
-        let noteDiv = document.createElement('div'); noteDiv.style.cssText = "display:flex; align-items:center; margin-top:10px; border-top:1px solid #ddd; padding-top:10px; width:100%;"; noteDiv.innerHTML = `<label style="width:80px; font-weight:bold; color:#e74c3c;">ملاحظات:</label><input type="text" id="orderNoteInput" class="form-control" placeholder="تيك أواي، صالة..." style="flex:1; border:1px solid #e74c3c; margin-bottom: 0;">`; targetInput.parentElement.insertAdjacentElement('afterend', noteDiv);
+        let noteDiv = document.createElement('div'); noteDiv.style.cssText = "display:flex; align-items:center; margin-top:10px; border-top:1px solid #ddd; padding-top:10px; width:100%;"; noteDiv.innerHTML = `<label style="width:80px; font-weight:bold; color:#e74c3c;">ملاحظات:</label><input type="text" id="orderNoteInput" class="form-control" placeholder="تيك أواي، بدون سكر، صالة..." style="flex:1; border:1px solid #e74c3c; margin-bottom: 0;">`; targetInput.parentElement.insertAdjacentElement('afterend', noteDiv);
     }
 }, 1500);
 
@@ -948,5 +979,4 @@ window.print = function() {
     originalWindowPrint2.apply(this, arguments); if(noteInput) noteInput.value = ''; 
 };
 </script>
-</body>
 </html>
