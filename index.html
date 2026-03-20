@@ -283,7 +283,7 @@
             <button id="nav_debts" class="nav-btn" onclick="nav('debts')"><i class="fas fa-hand-holding-usd"></i> العملاء والآجل</button>
             <button id="nav_loyalty" class="nav-btn" onclick="nav('loyalty')"><i class="fas fa-gift"></i> نظام الولاء 🎁</button>
             <button id="nav_staff" class="nav-btn" onclick="nav('staff')"><i class="fas fa-users"></i> الموظفين</button>
-            <button id="nav_shift" class="nav-btn" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; margin-top: 20px; border: 1px dashed #e74c3c;" onclick="openCloseShiftModal()"><i class="fas fa-lock"></i> تقفيل اليومية</button>
+            <button id="nav_shift" class="nav-btn" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; margin-top: 20px; border: 1px dashed #e74c3c;" onclick="openModal('modal_z_report')"><i class="fas fa-lock"></i> تقفيل اليومية</button>
         </div>
         <div class="user-panel-container">
             <div class="cashier-info" id="currentUserLabel"><i class="fas fa-user-shield"></i> جاري التحميل...</div>
@@ -314,10 +314,12 @@
                     <div class="cart-footer">
                         <div style="background: #fff; margin-top: auto;">
                             <div id="waiterActions" style="display:none; margin-bottom: 10px;">
-                                <button onclick="waiterSendToKitchen()" style="width: 100%; padding: 15px; font-size: 18px; font-weight: 900; background: var(--secondary); color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"><i class="fas fa-paper-plane"></i> إرسال الأوردر للمطبخ والكاشير</button>
+                                <button onclick="sendCurrentTableToKitchen()" style="width: 100%; padding: 15px; font-size: 18px; font-weight: 900; background: var(--secondary); color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"><i class="fas fa-paper-plane"></i> إرسال الأوردر للمطبخ والكاشير</button>
                             </div>
 
                             <div id="cashierActions">
+                                <button onclick="sendCurrentTableToKitchen()" style="width: 100%; padding: 12px; font-size: 16px; font-weight: 900; background: #34495e; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;"><i class="fas fa-fire" style="color:#e74c3c;"></i> إرسال الأوردر للمطبخ الآن</button>
+                                
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                     <span style="font-weight: bold; font-size: 15px; color: var(--primary-dark);">الخصم (ج):</span>
                                     <input type="number" id="cartDiscount" value="0" min="0" onkeyup="renderCart()" onchange="renderCart()" style="width: 80px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 5px; font-weight: bold; font-size: 15px;">
@@ -333,7 +335,6 @@
                                 </div>
                                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                                     <button onclick="openSplitModal()" style="width: 75px; height: 75px; background: #8e44ad; color: white; border: none; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;"><i class="fas fa-cut" style="font-size: 22px; margin-bottom: 6px;"></i><span style="font-size: 12px; font-weight: bold;">تقسيم</span></button>
-                                    
                                     <button onclick="showInvoiceModal()" style="width: 75px; height: 75px; background: var(--secondary); color: white; border: none; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;"><i class="fas fa-check" style="font-size: 22px; margin-bottom: 6px;"></i><span style="font-size: 12px; font-weight: bold;">دفع فقط</span></button>
                                     <button onclick="processCheckout('cash', true)" style="width: 75px; height: 75px; background: var(--success); color: white; border: none; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;"><i class="fas fa-print" style="font-size: 22px; margin-bottom: 6px;"></i><span style="font-size: 12px; font-weight: bold;">طباعة</span></button>
                                 </div>
@@ -429,11 +430,11 @@
             <div class="finance-grid">
                 <div class="vault-card">
                     <i class="fas fa-vault" style="font-size: 60px; position: absolute; right: -10px; bottom: -10px; opacity: 0.1;"></i>
-                    <h2>الخزنة الرئيسية (The Vault)</h2>
-                    <div class="vault-amount" id="vaultTotalBalance">0.00 ج</div>
+                    <h2>الخزنة الرئيسية <button onclick="openVaultLog()" style="background:none; border:none; color:var(--gold-light); font-size:18px; cursor:pointer;" title="سجل الحركات وإصلاح الأخطاء"><i class="fas fa-history"></i></button></h2>
+                    <div class="vault-amount" id="vaultTotalBalance" style="cursor:pointer;" title="اضغط لعرض الرصيد" onclick="checkVaultPin()">0.00 ج</div>
                     <div class="vault-actions">
-                        <button class="vault-btn v-deposit" onclick="openGenericModal('vault_in')"><i class="fas fa-arrow-down"></i> إيداع (توريد)</button>
-                        <button class="vault-btn v-withdraw" onclick="openGenericModal('vault_out')"><i class="fas fa-arrow-up"></i> سحب</button>
+                        <button class="vault-btn v-deposit" onclick="openGenericModal('vault_in')" style="color:var(--success);"><i class="fas fa-arrow-down"></i> إيداع (توريد)</button>
+                        <button class="vault-btn v-withdraw" onclick="openGenericModal('vault_out')" style="color:var(--danger);"><i class="fas fa-arrow-up"></i> سحب</button>
                     </div>
                 </div>
                 
@@ -471,7 +472,7 @@
             <div class="data-panel" style="margin-top: 20px;">
                 <div class="panel-title"><h2><i class="fas fa-history"></i> سجل اليوميات (أرشيف الكاشير)</h2></div>
                 <table>
-                    <thead><tr><th>تاريخ الوردية</th><th>إجمالي المبيعات</th><th>المصروفات</th><th>الصافي النقدي</th></tr></thead>
+                    <thead><tr><th>تاريخ الوردية</th><th>إجمالي المبيعات</th><th>المصروفات</th><th>الصافي النقدي</th><th>إجراء</th></tr></thead>
                     <tbody id="dailyLogTableBody"></tbody>
                 </table>
             </div>
@@ -585,13 +586,30 @@
     <div id="modal_whatsapp" class="modal"><div class="modal-content" style="text-align:center;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--whatsapp);"><i class="fab fa-whatsapp"></i> إرسال رسالة للإدارة</h3><p style="margin-bottom:20px; font-size:14px; color:#555; font-weight:bold;">اختر الرقم اللي حابب تبعتله التقرير أو الإنذار:</p><input type="hidden" id="waMessageContent"><button class="btn-action" style="width:100%; background:#128C7E; margin-bottom:10px; font-size:16px;" onclick="executeWhatsApp('201067876987')">إرسال للرقم الأول (01067876987) <i class="fas fa-paper-plane"></i></button><button class="btn-action" style="width:100%; background:#075E54; font-size:16px;" onclick="executeWhatsApp('201066709180')">إرسال للرقم الثاني (01066709180) <i class="fas fa-paper-plane"></i></button></div></div>
     <div id="modal_inv_edit" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-boxes"></i> تزويد رصيد الصنف</h3><h4 id="edit_inv_name_display" style="color:var(--primary); text-align:center; margin-bottom:15px;"></h4><input type="hidden" id="edit_inv_id"><label style="font-weight:bold; font-size:12px;">الكمية المشتراة:</label><input type="number" id="edit_inv_add_qty" class="form-control"><label style="font-weight:bold; font-size:12px;">التكلفة الإجمالية:</label><input type="number" id="edit_inv_add_cost" class="form-control"><button class="btn-action" onclick="saveInvEdit()" style="width:100%;"><i class="fas fa-plus"></i> تأكيد التزويد</button></div></div>
     <div id="modal_inv_withdraw" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-minus-circle"></i> سحب رصيد للبار</h3><h4 id="withdraw_inv_name_display" style="color:var(--primary); text-align:center; margin-bottom:15px;"></h4><input type="hidden" id="withdraw_inv_id"><label style="font-weight:bold; font-size:12px;">الكمية المسحوبة من المخزن:</label><input type="number" id="withdraw_inv_qty" class="form-control" placeholder="اكتب الكمية..."><button class="btn-action" onclick="saveInvWithdraw()" style="width:100%; background: var(--secondary); color: black;"><i class="fas fa-minus"></i> تأكيد السحب</button></div></div>
-    <div id="modal_supplier" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>إضافة مورد جديد</h3><input type="text" id="new_sup_name" placeholder="اسم المورد..." class="form-control"><input type="text" id="new_sup_phone" placeholder="رقم التليفون..." class="form-control"><input type="text" id="new_sup_desc" placeholder="بيورد إيه؟..." class="form-control"><button class="btn-action" onclick="saveSupplier()" style="width:100%"><i class="fas fa-save"></i> حفظ المورد</button></div></div>
+    <div id="modal_supplier" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>إضافة مورد جديد</h3><input type="text" id="new_sup_name" placeholder="اسم المورد (ضروري)..." class="form-control"><input type="text" id="new_sup_phone" placeholder="رقم التليفون..." class="form-control"><input type="text" id="new_sup_desc" placeholder="بيورد إيه؟..." class="form-control"><button class="btn-action" onclick="saveSupplier()" style="width:100%"><i class="fas fa-save"></i> حفظ المورد</button></div></div>
     <div id="modal_exp" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>تسجيل مصروف</h3><select id="new_exp_cat" class="form-control" onchange="toggleSupplierSelect()"><option value="بضاعة ومشتريات">بضاعة ومشتريات</option><option value="صيانة وأعطال">صيانة وأعطال</option><option value="فواتير (كهرباء/مياه)">فواتير (كهرباء/مياه)</option><option value="نثريات وضيافة">نثريات أخرى</option></select><select id="new_exp_supplier" class="form-control" style="display:none;"><option value="">-- اختر المورد --</option></select><input type="text" id="new_exp_title" placeholder="اكتب تفاصيل المصروف..." class="form-control"><input type="number" id="new_exp_val" placeholder="المبلغ" class="form-control"><button class="btn-action" onclick="saveExpense()" style="width:100%">تسجيل المصروف</button></div></div>
     <div id="modal_staff" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3>بيانات الموظف</h3><input type="text" id="staff_name" placeholder="الاسم" class="form-control"><input type="text" id="staff_job" placeholder="الوظيفة" class="form-control"><input type="number" id="staff_salary" placeholder="الراتب الأساسي" class="form-control"><button class="btn-action" onclick="saveStaff()" style="width:100%">حفظ</button></div></div>
     <div id="modal_staff_action" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 id="staff_action_title">تسجيل حركة</h3><input type="hidden" id="staff_action_id"><select id="staff_action_type" class="form-control" onchange="handleStaffActionChange()"><option value="advance">سلفة (تخصم من الراتب)</option><option value="deduction">خصم / جزاء</option><option value="absence">غياب (يوم أو أكثر)</option><option value="bonus">مكافأة</option><option value="salary">صرف الراتب (القبض)</option></select><input type="number" id="staff_action_amount" placeholder="المبلغ" class="form-control"><input type="text" id="staff_action_note" placeholder="ملاحظات / السبب (اختياري)..." class="form-control"><button class="btn-action" onclick="saveStaffAction()" style="width:100%">تأكيد وتسجيل</button></div></div>
-    <div id="modal_close_shift" class="modal"><div class="modal-content" style="width: 400px; text-align: right;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-lock"></i> تقفيل وردية اليوم</h3><div id="shift_report_body" style="line-height:2; font-size:16px;"></div><button class="btn-action" style="width:100%; margin-top:20px; background: var(--primary);" onclick="printShiftReport()"><i class="fas fa-print"></i> طباعة الإيصال وتقفيل اليومية</button></div></div>
     <div id="modal_generic_input" class="modal"><div class="modal-content" style="width: 350px;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 id="generic_modal_title">...</h3><input type="hidden" id="generic_modal_action"><input type="text" id="generic_modal_text" class="form-control" placeholder="..."><input type="number" id="generic_modal_number" class="form-control" placeholder="المبلغ..." style="display:none;"><button class="btn-action" onclick="executeGenericAction()" style="width:100%; font-size:16px;">تأكيد ✅</button></div></div>
     <div id="modal_loyalty_redeem" class="modal"><div class="modal-content" style="width: 350px;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3><i class="fas fa-gift"></i> استبدال النقاط</h3><p id="loyalty_redeem_info" style="font-size: 14px; color: #555; margin-bottom: 15px; line-height: 1.8;"></p><input type="hidden" id="loyalty_redeem_phone"><input type="number" id="loyalty_redeem_amount" class="form-control" placeholder="عدد النقاط المراد خصمها..."><button class="btn-action" onclick="executeRedeemPoints()" style="width:100%; background: var(--secondary); color: black;">تأكيد الخصم ✅</button></div></div>
+
+    <div id="modal_vault_pin" class="modal"><div class="modal-content"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:#e74c3c; margin-bottom:10px;"><i class="fas fa-lock"></i> الخزنة محمية</h3><p style="text-align:center; font-size:13px; margin-bottom:15px; color:#555;">برجاء إدخال الرقم السري للمدير لعرض الرصيد</p><input type="password" id="vault_pin_input" class="form-control" placeholder="****" style="text-align:center; font-size:30px; letter-spacing:15px;"><button class="btn-action" onclick="verifyVaultPin()" style="width:100%; background:#e74c3c;"><i class="fas fa-unlock"></i> فتح الخزنة</button></div></div>
+    <div id="modal_vault_log" class="modal"><div class="modal-content" style="max-width:600px;"><button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button><h3 style="color:var(--primary); margin-bottom:15px;"><i class="fas fa-history"></i> سجل حركات الخزنة (تعديل الأخطاء)</h3><div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; text-align:center; font-size:13px;"><thead><tr style="background:var(--primary); color:white;"><th>النوع</th><th>المبلغ</th><th>البيان</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody id="vault_log_tbody"></tbody></table></div></div></div>
+    
+    <div id="modal_z_report" class="modal">
+        <div class="modal-content" style="width:90%; max-width:400px; padding:30px 20px; text-align:center;">
+            <button class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            <div style="background:#fdf2f2; width:80px; height:80px; border-radius:50%; display:flex; justify-content:center; align-items:center; margin:0 auto 15px;">
+                <i class="fas fa-lock" style="font-size:35px; color:#e74c3c;"></i>
+            </div>
+            <h2 style="color:#e74c3c; margin-bottom:10px; font-weight:900;">تقفيل اليومية</h2>
+            <p style="font-weight:bold; margin-bottom:25px; color:#333; font-size:15px;">هل أنت متأكد من تقفيل الوردية؟<br><span style="color:#7f8c8d; font-size:13px; font-weight:normal;">سيتم حفظ البيانات في الأرشيف وتصفير المبيعات الحالية.</span></p>
+            <div style="display:flex; gap:10px;">
+                <button onclick="executeZReport()" style="flex:1; background:var(--success); color:#fff; border:none; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer;"><i class="fas fa-check"></i> تأكيد وطباعة</button>
+                <button onclick="closeModal()" style="flex:1; background:#95a5a6; color:#fff; border:none; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer;"><i class="fas fa-times"></i> تراجع</button>
+            </div>
+        </div>
+    </div>
 
     <div id="modal_coffee_options" class="modal">
         <div class="modal-content" style="width: 380px;">
@@ -645,7 +663,7 @@
     <div class="r-header">
         <img src="assets/images/logo.png" alt="NEO" onerror="this.style.display='none'">
         <h2>NEO Café</h2>
-        <div class="r-slogan">✨ رمضانك جميل في نيو ✨</div>
+        <div class="r-slogan">✨ أصل القهوة في نيو ✨</div>
     </div>
     <div class="r-meta">
         <div><span>فاتورة #:</span> <span id="p_id"></span></div>
@@ -764,13 +782,16 @@ database.ref('NeoCafe/neo_kitchen_v1').on('value', snap => {
     }
 });
 
-/* ================== استقبال الأوردر الأونلاين ================== */
+/* ================== استقبال الأوردر الأونلاين (مع التعديل الذكي للمطبخ) ================== */
 database.ref('NeoCafe/online_orders').on('child_added', snap => {
     let order = snap.val(); let key = snap.key;
     
     let tId = isNaN(order.table) ? order.table : Number(order.table);
     if(!tablesOrder[tId]) tablesOrder[tId] = [];
-    order.items.forEach(i => tablesOrder[tId].push(i));
+    order.items.forEach(i => {
+        i.sentToKDS = true; // تميز إنها راحت المطبخ عشان متطبعش تاني
+        tablesOrder[tId].push(i);
+    });
     saveTables(); 
     
     if(order.customerPhone) {
@@ -862,7 +883,7 @@ function forceMenuSync() {
 }
 
 /* ================== Menu Editor ================== */
-function populateMenuEditCats() { const sel = document.getElementById('editMenuCat'); sel.innerHTML = '<option value="">-- اختر القسم --</option>'; const catOrder = ['ramadan', 'hot', 'cold', 'soft', 'dessert', 'ice', 'special', 'extras', 'fun']; catOrder.filter(k => MENU[k]).forEach(k => { let title = MENU[k].title; if(k === 'ramadan' && !title.includes('موسمي')) title += ' (موسمي)'; sel.innerHTML += `<option value="${k}">${title}</option>`; }); }
+['hot', 'cold', 'soft', 'dessert', 'ice', 'special', 'extras', 'fun']
 function renderMenuEditor() {
     const catKey = document.getElementById('editMenuCat').value; const subSel = document.getElementById('editMenuSubCat'); const container = document.getElementById('menuEditorContainer');
     if(!catKey) { container.innerHTML = ''; subSel.style.display = 'none'; return; }
@@ -922,7 +943,7 @@ function escapeHtml(s){return String(s||'').replace(/&/g,"&amp;").replace(/</g,"
 function getBusinessDate(dateObj) { let d = new Date(dateObj); if (d.getHours() < 5) d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; }
 
 function renderMap(){const m=document.getElementById('cafeMap'); m.innerHTML=''; LAYOUT.forEach(o=>{const d=document.createElement('div'); if(o.type==='static'){d.className=`obj-${o.id}`;d.innerHTML=o.label;} else{const h=tablesOrder[o.id]&&tablesOrder[o.id].length>0,t=h?tablesOrder[o.id].reduce((a,b)=>a+(b.price*b.qty),0):0; d.className=`table-card ${h?'occupied':''} ${currentTable==o.id?'selected':''}`; d.id=`tbl_${o.id}`; d.innerHTML=`${o.label} ${h?`<br><div class="table-total">${t} ج</div>`:''}`; d.onclick=()=>{currentTable=o.id;document.getElementById('activeTableLabel').textContent=o.label;const di=document.getElementById('cartDiscount');if(di)di.value=0; const ti=document.getElementById('cartTips');if(ti)ti.value=0; renderMap();renderCart();};} m.appendChild(d);});}
-function renderCategories(){ const catOrder = ['ramadan', 'hot', 'cold', 'soft', 'dessert', 'ice', 'special', 'extras', 'fun']; document.getElementById('posCats').innerHTML = catOrder.filter(k => MENU[k]).map(k => { let title = MENU[k].title; if(k === 'ramadan' && !title.includes('موسمي')) title += ' (موسمي)'; return `<div class="cat-chip" id="btn_${k}" onclick="changeCat('${k}')">${title}</div>`; }).join(''); }
+['hot', 'cold', 'soft', 'dessert', 'ice', 'special', 'extras', 'fun']
 function changeCat(k){document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));const b=document.getElementById(`btn_${k}`);if(b)b.classList.add('active');const s=document.getElementById('posSubCats'),g=document.getElementById('posProducts');s.innerHTML='';s.classList.remove('show');g.innerHTML='';const d=MENU[k];if(d.isComplex){s.classList.add('show');d.subcats.forEach((sub,i)=>{const sb=document.createElement('div');sb.className=`sub-cat-chip ${i===0?'active':''}`;sb.textContent=sub.title;sb.onclick=(e)=>{document.querySelectorAll('.sub-cat-chip').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');renderProducts(sub.items);};s.appendChild(sb);});renderProducts(d.subcats[0].items);}else{renderProducts(d.items);}}
 function renderProducts(i){document.getElementById('posProducts').innerHTML=i.map(p=>`<div class="prod-card" onclick="addToCart('${p.id}','${escapeHtml(p.name)}',${p.price})"><div class="prod-name">${escapeHtml(p.name)}</div><div class="prod-price">${p.price} ج</div></div>`).join('');}
 function searchPOSProducts() {
@@ -984,7 +1005,27 @@ function confirmCoffee() {
     closeModal();
 }
 
-function _addItemToCart(id, name, price){if(!tablesOrder[currentTable])tablesOrder[currentTable]=[]; const existing = tablesOrder[currentTable].find(x => x.name === name); if(existing) existing.qty++; else tablesOrder[currentTable].push({id, name, price, qty:1}); saveTables(); renderCart(); renderMap();}
+function _addItemToCart(id, name, price){
+    if(!tablesOrder[currentTable]) tablesOrder[currentTable]=[]; 
+    const existing = tablesOrder[currentTable].find(x => x.name === name && !x.sentToKDS); 
+    if(existing) existing.qty++; 
+    else tablesOrder[currentTable].push({id, name, price, qty:1, sentToKDS: false}); 
+    saveTables(); renderCart(); renderMap();
+}
+
+// دالة إرسال الأوردر للمطبخ يدوياً (للكاشير والويتر)
+function sendCurrentTableToKitchen() {
+    if(!currentTable||!tablesOrder[currentTable]?.length) return alert('الترابيزة فاضية!');
+    let unsentItems = tablesOrder[currentTable].filter(i => !i.sentToKDS);
+    if(unsentItems.length === 0) return alert('كل الطلبات دي اتبعتت للمطبخ قبل كده! 🔥');
+    
+    sendToKitchen(Date.now(), tableName(currentTable), unsentItems, new Date().toISOString());
+    tablesOrder[currentTable].forEach(i => i.sentToKDS = true);
+    saveTables();
+    alert('تم إرسال الطلبات الجديدة للمطبخ بنجاح! 🚀');
+    renderCart();
+    renderMap();
+}
 
 function renderCart(){
     const c=document.getElementById('cartItems');
@@ -996,7 +1037,8 @@ function renderCart(){
     let s=0;
     c.innerHTML=tablesOrder[currentTable].map((i,x)=>{
         s+=i.price*i.qty;
-        return`<div class="cart-item"><div class="item-info">${i.name}</div><div class="qty-controls"><button class="qty-btn dec" onclick="modQty(${x},-1)">-</button><span>${i.qty}</span><button class="qty-btn inc" onclick="modQty(${x},1)">+</button></div><div class="item-total">${i.price*i.qty} ج</div></div>`;
+        let fireIcon = i.sentToKDS ? '<i class="fas fa-fire" style="color:#e74c3c; font-size:12px; margin-right:8px;" title="في المطبخ"></i>' : '';
+        return`<div class="cart-item"><div class="item-info">${i.name} ${fireIcon}</div><div class="qty-controls"><button class="qty-btn dec" onclick="modQty(${x},-1)">-</button><span>${i.qty}</span><button class="qty-btn inc" onclick="modQty(${x},1)">+</button></div><div class="item-total">${i.price*i.qty} ج</div></div>`;
     }).join('');
     
     const di=document.getElementById('cartDiscount'),d=di&&di.value?parseFloat(di.value):0;
@@ -1011,12 +1053,7 @@ function clearCart(){if(!currentTable)return;if(confirm('مسح جميع الط�
 function saveTables(){localStorage.setItem(DB.keys.tables,JSON.stringify(tablesOrder)); try{database.ref('NeoCafe/' + DB.keys.tables).set(tablesOrder);}catch(e){}}
 
 function waiterSendToKitchen() {
-    if(!currentTable||!tablesOrder[currentTable]?.length) return alert('الترابيزة فاضية!');
-    const cart = tablesOrder[currentTable];
-    sendToKitchen(Date.now(), tableName(currentTable), cart, new Date().toISOString());
-    alert('تم إرسال الطلب للمطبخ والكاشير بنجاح! 🚀');
-    currentTable = null; document.getElementById('activeTableLabel').textContent = "لم يتم تحديد طاولة";
-    renderMap(); renderCart();
+    sendCurrentTableToKitchen(); // تم الاستبدال بالدالة الموحدة
 }
 
 /* ================== Checkout & Generic Modals ================== */
@@ -1096,10 +1133,28 @@ function processCheckout(type, print, custName = ""){
     }
 
     let profitWithoutTips = (sub-disc) - cost;
+    let unsentItems = cart.filter(i => !i.sentToKDS);
 
-    if(['cash','vodafone','insta','visa'].includes(type)){ const s=DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:cart,subTotal:sub,discount:disc,tips:tips,total,cost,profit:profitWithoutTips,type:'sale',method:type}); DB.saveData(DB.keys.sales,s); sendToKitchen(id,tableName(currentTable),cart,now.toISOString()); } 
-    else if(type==='credit'){ const d=DB.getData(DB.keys.debts); d.push({id,date:now.toISOString(),customer:custName,items:cart,amount:total,status:'unpaid'}); DB.saveData(DB.keys.debts,d); sendToKitchen(id,tableName(currentTable),cart,now.toISOString()); renderDebts(); alert('تم ترحيل الأوردر للآجل ✅'); } 
-    else if(type==='hospitality'){ const h=DB.getData(DB.keys.hospitality); h.push({id,date:now.toISOString(),reason:custName,items:cart,cost,lostRevenue:total}); DB.saveData(DB.keys.hospitality,h); sendToKitchen(id,tableName(currentTable),cart,now.toISOString()); renderDebts(); alert('تم تسجيل الأوردر كضيافة ✅'); }
+    if(['cash','vodafone','insta','visa'].includes(type)){ 
+        const s=DB.getData(DB.keys.sales); 
+        s.push({id,date:now.toISOString(),items:cart,subTotal:sub,discount:disc,tips:tips,total,cost,profit:profitWithoutTips,type:'sale',method:type}); 
+        DB.saveData(DB.keys.sales,s); 
+        if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); 
+    } 
+    else if(type==='credit'){ 
+        const d=DB.getData(DB.keys.debts); 
+        d.push({id,date:now.toISOString(),customer:custName,items:cart,amount:total,status:'unpaid'}); 
+        DB.saveData(DB.keys.debts,d); 
+        if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); 
+        renderDebts(); alert('تم ترحيل الأوردر للآجل ✅'); 
+    } 
+    else if(type==='hospitality'){ 
+        const h=DB.getData(DB.keys.hospitality); 
+        h.push({id,date:now.toISOString(),reason:custName,items:cart,cost,lostRevenue:total}); 
+        DB.saveData(DB.keys.hospitality,h); 
+        if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); 
+        renderDebts(); alert('تم تسجيل الأوردر كضيافة ✅'); 
+    }
 
     if(print && ['cash','vodafone','insta','visa'].includes(type)){
         document.getElementById('p_date').textContent=now.toLocaleDateString('ar-EG'); document.getElementById('p_time').textContent=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}); document.getElementById('p_id').textContent=id.toString().slice(-6); document.getElementById('p_table').textContent=tableName(currentTable);
@@ -1136,7 +1191,6 @@ function tableName(id){const t=LAYOUT.find(x=>x.id==id);return t?t.label:id;}
 let splitSelection = [];
 function openSplitModal() {
     if(!currentTable || !tablesOrder[currentTable] || tablesOrder[currentTable].length === 0) return alert('لا يوجد طلبات على هذه الطاولة لتقسيمها!');
-    // بننسخ محتويات الترابيزة وبنضيفلها كاونتر اسمه selectedQty هيبدأ بـ صفر
     splitSelection = tablesOrder[currentTable].map(i => ({...i, selectedQty: 0}));
     renderSplitUI();
     openModal('modal_split_bill');
@@ -1147,9 +1201,10 @@ function renderSplitUI() {
     let splitTotal = 0;
     splitSelection.forEach((item, idx) => {
         splitTotal += item.price * item.selectedQty;
+        let fireIcon = item.sentToKDS ? '<i class="fas fa-fire" style="color:#e74c3c; font-size:12px; margin-right:8px;" title="في المطبخ"></i>' : '';
         html += `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px dashed #ccc;">
-            <div style="flex:2; font-weight:bold; font-size: 14px;">${item.name} <br><small style="color:#e74c3c;">(المتاح بالترابيزة: ${item.qty - item.selectedQty})</small></div>
+            <div style="flex:2; font-weight:bold; font-size: 14px;">${item.name} ${fireIcon}<br><small style="color:#e74c3c;">(المتاح بالترابيزة: ${item.qty - item.selectedQty})</small></div>
             <div style="display:flex; align-items:center; gap:10px;">
                 <button class="btn-action" style="padding:4px 12px; background:#e74c3c; border-radius:6px;" onclick="modSplitQty(${idx}, -1)">-</button>
                 <span style="font-weight:900; font-size:18px; width:20px; text-align:center; display:inline-block;">${item.selectedQty}</span>
@@ -1165,7 +1220,6 @@ function renderSplitUI() {
 function modSplitQty(idx, d) {
     let item = splitSelection[idx];
     let newQty = item.selectedQty + d;
-    // نتأكد إنه مش بياخد بالسالب، ومش بياخد أكتر من اللي موجود على الترابيزة أصلاً
     if(newQty >= 0 && newQty <= item.qty) {
         item.selectedQty = newQty;
         renderSplitUI();
@@ -1173,41 +1227,32 @@ function modSplitQty(idx, d) {
 }
 
 function processSplitCheckout(method) {
-    // بنفلتر عشان ناخد بس الأصناف اللي العميل اختار يدفعها دلوقتي
-    let itemsToPay = splitSelection.filter(i => i.selectedQty > 0).map(i => ({id: i.id, name: i.name, price: i.price, qty: i.selectedQty}));
-    
+    let itemsToPay = splitSelection.filter(i => i.selectedQty > 0).map(i => ({id: i.id, name: i.name, price: i.price, qty: i.selectedQty, sentToKDS: i.sentToKDS}));
     if(itemsToPay.length === 0) return alert('لم تقم باختيار أي أصناف للدفع!');
     
     let subTotal = itemsToPay.reduce((a,b) => a + (b.price * b.qty), 0);
-    
     let now = new Date(); let id = Date.now(); let cost = 0;
     const rec=DB.getData(DB.keys.recipes); const inv=DB.getData(DB.keys.inv);
     
-    // خصم الخامات من المخزن للأصناف المدفوعة فقط
     itemsToPay.forEach(i=>{const r=rec[i.id];if(r)r.forEach(g=>{const s=inv.find(x=>x.id===g.invId);if(s){s.stock-=g.qty*i.qty;cost+=s.avgCost*g.qty*i.qty;}});});
     DB.saveData(DB.keys.inv,inv);
     
-    // تسجيل عملية بيع منفصلة
     let s = DB.getData(DB.keys.sales);
     s.push({id,date:now.toISOString(),items:itemsToPay,subTotal:subTotal,discount:0,tips:0,total:subTotal,cost,profit:subTotal-cost,type:'sale',method:method});
     DB.saveData(DB.keys.sales, s);
     
-    // الأهم: خصم الكميات اللي اتدفعت من الترابيزة الرئيسية
+    let unsentSplit = itemsToPay.filter(i => !i.sentToKDS);
+    if(unsentSplit.length > 0) sendToKitchen(id, tableName(currentTable) + " (منفصل)", unsentSplit, now.toISOString());
+    
     splitSelection.forEach((item, idx) => {
-        if(item.selectedQty > 0) {
-            tablesOrder[currentTable][idx].qty -= item.selectedQty;
-        }
+        if(item.selectedQty > 0) { tablesOrder[currentTable][idx].qty -= item.selectedQty; }
     });
     
-    // مسح الأصناف اللي كميتها بقت صفر من الترابيزة
     tablesOrder[currentTable] = tablesOrder[currentTable].filter(i => i.qty > 0);
-    if(tablesOrder[currentTable].length === 0) {
-         delete tablesMeta[currentTable]; saveTablesMeta();
-    }
+    if(tablesOrder[currentTable].length === 0) { delete tablesMeta[currentTable]; saveTablesMeta(); }
     
     saveTables(); renderCart(); renderMap(); updateDashboard(); renderFinance();
     
-    // طباعة ريسيت منفصل للأصناف دي بس
     document.getElementById('p_date').textContent=now.toLocaleDateString('ar-EG'); 
     document.getElementById('p_time').textContent=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}); 
     document.getElementById('p_id').textContent=id.toString().slice(-6); 
@@ -1428,41 +1473,111 @@ function renderExpenses(){
 }
 
 function renderFinance() {
-    const vault = DB.getData(DB.keys.vault) || {balance: 0, transactions: []}; document.getElementById('vaultTotalBalance').textContent = vault.balance.toFixed(2) + ' ج';
-    const sups = DB.getData(DB.keys.suppliers) || []; document.getElementById('suppliersTableBody').innerHTML = sups.map(s => `<tr><td>${s.name}</td><td>${s.phone}</td><td>${s.desc}</td><td><button class="btn-action" style="background:#e74c3c; padding:4px 8px;" onclick="delSupplier(${s.id})"><i class="fas fa-trash"></i></button></td></tr>`).join('');
-    const s = DB.getData(DB.keys.sales).filter(x=>x.type!=='debt_payment'); const e = DB.getData(DB.keys.exp); const fc = DB.getData(DB.keys.fixed_costs);
-    document.getElementById('fc_rent').value = fc.rent || 0; document.getElementById('fc_salaries').value = fc.salaries || 0; document.getElementById('fc_utils').value = fc.utils || 0;
+    let vault = DB.getData(DB.keys.vault) || {balance: 0, transactions: []};
+    window.currentVaultBalance = vault.transactions ? vault.transactions.reduce((sum, tx) => tx.type === 'in' ? sum + parseFloat(tx.amount) : sum - parseFloat(tx.amount), 0) : vault.balance || 0;
+    
+    let vaultH2 = document.getElementById('vaultTotalBalance');
+    if(vaultH2) {
+        vaultH2.style.cursor = 'pointer';
+        vaultH2.onclick = checkVaultPin;
+        if(!window.isVaultUnlocked) {
+            vaultH2.innerHTML = '<i class="fas fa-eye-slash" style="color:#7f8c8d; font-size:24px;"></i> <span style="letter-spacing:5px;">****</span> ج';
+        } else {
+            vaultH2.innerHTML = '<i class="fas fa-eye" style="color:#27ae60; font-size:24px;"></i> ' + window.currentVaultBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ج';
+        }
+    }
 
-    let dailyLog = {};
-    s.forEach(sale => { let d = getBusinessDate(sale.date); if(!dailyLog[d]) dailyLog[d] = {sales: 0, exps: 0}; dailyLog[d].sales += sale.total; });
-    e.forEach(exp => { let d = getBusinessDate(exp.date); if(!dailyLog[d]) dailyLog[d] = {sales: 0, exps: 0}; dailyLog[d].exps += exp.amount; });
+    const fc = DB.getData(DB.keys.fixed_costs);
+    document.getElementById('fc_rent').value = fc.rent || 0; 
+    document.getElementById('fc_salaries').value = fc.salaries || 0; 
+    document.getElementById('fc_utils').value = fc.utils || 0;
 
-    const sortedDays = Object.keys(dailyLog).sort((a,b) => new Date(b) - new Date(a));
-    document.getElementById('dailyLogTableBody').innerHTML = sortedDays.map(date => { const dNet = dailyLog[date].sales - dailyLog[date].exps; return `<tr><td><b>${date}</b></td><td style="color:var(--success)">${dailyLog[date].sales} ج</td><td style="color:var(--danger)">${dailyLog[date].exps} ج</td><td style="font-weight:900; color:var(--primary-dark)">${dNet} ج</td></tr>`; }).join('');
-    updateBreakEven(fc, dailyLog);
-
-    // حساب التيبس للشهر الحالي
+    const s = DB.getData(DB.keys.sales).filter(x=>x.type!=='debt_payment');
     const currentMonth = new Date().toISOString().slice(0,7);
     let totalMonthTips = 0;
+    let monthSales = 0;
     s.forEach(sale => {
-        if(sale.date.startsWith(currentMonth) && sale.tips) {
-            totalMonthTips += sale.tips;
+        if(sale.date.startsWith(currentMonth)) {
+            if(sale.tips) totalMonthTips += sale.tips;
+            monthSales += sale.total;
         }
     });
+    
     let tipsEl = document.getElementById('financeTotalTips');
     if(tipsEl) tipsEl.textContent = totalMonthTips.toFixed(2) + ' ج';
-}
-function delSupplier(id) { if(confirm('حذف المورد؟')) { const s = DB.getData(DB.keys.suppliers).filter(x=>x.id!==id); DB.saveData(DB.keys.suppliers, s); renderFinance(); updateSupplierDropdown(); } }
-function saveFixedCosts() { const fc = { rent: parseFloat(document.getElementById('fc_rent').value) || 0, salaries: parseFloat(document.getElementById('fc_salaries').value) || 0, utils: parseFloat(document.getElementById('fc_utils').value) || 0 }; DB.saveData(DB.keys.fixed_costs, fc); renderFinance(); alert('تم تحديث التحليل المالي.'); }
-function updateBreakEven(fc, dailyLog) {
-    const totalFixed = fc.rent + fc.salaries + fc.utils; const today = new Date(); const currentMonth = today.toISOString().slice(0,7); 
-    let monthSales = 0; Object.keys(dailyLog).forEach(d => { if(d.startsWith(currentMonth)) monthSales += dailyLog[d].sales; });
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(); const remainingDays = daysInMonth - today.getDate() + 1; 
-    let target = totalFixed - monthSales; let beBox = document.getElementById('breakEvenResult');
+
+    const totalFixed = fc.rent + fc.salaries + fc.utils; 
+    const today = new Date();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(); 
+    const remainingDays = daysInMonth - today.getDate() + 1; 
+    let target = totalFixed - monthSales; 
+    let beBox = document.getElementById('breakEvenResult');
 
     if(totalFixed === 0) { beBox.innerHTML = '<h3 style="color:#7f8c8d;">برجاء إدخال مصاريفك الثابتة بالأعلى لبدء التحليل</h3>'; } 
     else if (target <= 0) { beBox.innerHTML = `<div style="font-size:40px; color:var(--success); margin-bottom:10px;"><i class="fas fa-trophy"></i></div><h3 style="color:var(--success); margin:0;">ألف مبروك!</h3><p style="font-weight:bold; color:#333;">لقد تجاوزت نقطة التعادل لهذا الشهر.<br>أي مبيعات إضافية هي <b>أرباح صافية</b>.</p>`; } 
     else { let dailyTarget = target / remainingDays; beBox.innerHTML = `<h3 style="color:var(--danger); margin-top:0;">الهدف المتبقي لتغطية المصاريف</h3><div style="font-size:32px; font-weight:900; color:var(--primary);">${target.toFixed(0)} ج</div><p style="font-size:14px; color:#555; font-weight:bold; margin-top:10px;">يجب أن تبيع يومياً بمتوسط <span style="background:var(--secondary); color:white; padding:3px 8px; border-radius:5px;">${dailyTarget.toFixed(0)} ج</span><br>في الـ ${remainingDays} أيام المتبقية من الشهر لتصل لنقطة التعادل.</p>`; }
+
+    const sups = DB.getData(DB.keys.suppliers) || []; 
+    document.getElementById('suppliersTableBody').innerHTML = sups.map(sup => `<tr><td>${sup.name}</td><td>${sup.phone || '-'}</td><td>${sup.desc || sup.supplies || '-'}</td><td><button class="btn-action" style="background:#e74c3c; padding:4px 8px;" onclick="delSupplier('${sup.id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+
+    let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
+    document.getElementById('dailyLogTableBody').innerHTML = archive.slice(-15).reverse().map((day, index) => `<tr style="text-align:center; border-bottom:1px solid #eee;">
+        <td style="padding:10px; font-size:12px;">${day.date || 'غير محدد'}</td>
+        <td style="color:#27ae60; font-weight:bold;">${parseFloat(day.totalSales || 0).toLocaleString()} ج</td>
+        <td style="color:#e74c3c; font-weight:bold;">${parseFloat(day.totalExpenses || 0).toLocaleString()} ج</td>
+        <td style="font-weight:bold; color:var(--primary);">${parseFloat(day.netCash || 0).toLocaleString()} ج</td>
+        <td><button onclick="deleteArchiveRecord(${archive.length - 1 - index})" style="color:white; background:#e74c3c; padding:5px 10px; border-radius:5px; border:none; cursor:pointer;"><i class="fas fa-trash"></i> مسح</button></td>
+    </tr>`).join('');
+}
+
+function checkVaultPin() {
+    if(window.isVaultUnlocked) { window.isVaultUnlocked = false; renderFinance(); } 
+    else { document.getElementById('vault_pin_input').value = ''; openModal('modal_vault_pin'); }
+}
+function verifyVaultPin() {
+    if(document.getElementById('vault_pin_input').value === '1111') {
+        window.isVaultUnlocked = true; closeModal(); renderFinance();
+        setTimeout(() => { window.isVaultUnlocked = false; renderFinance(); }, 15000); 
+    } else alert('❌ الرقم السري غير صحيح!');
+}
+
+function openVaultLog() {
+    let vault = DB.getData(DB.keys.vault) || {transactions: []};
+    let txs = vault.transactions || [];
+    document.getElementById('vault_log_tbody').innerHTML = txs.slice().reverse().map(tx => `
+        <tr style="border-bottom:1px solid #ddd;">
+            <td style="padding:8px; color:${tx.type === 'in' ? '#27ae60' : '#e74c3c'}; font-weight:bold;">${tx.type === 'in' ? 'إيداع 📥' : 'سحب 📤'}</td>
+            <td style="font-weight:bold;">${parseFloat(tx.amount).toLocaleString()} ج</td>
+            <td>${tx.note}</td>
+            <td style="font-size:11px; color:#777;">${new Date(tx.date).toLocaleDateString('ar-EG')}</td>
+            <td><button onclick="deleteVaultTx('${tx.id}')" style="background:none; border:none; color:#e74c3c; cursor:pointer;" title="حذف لتصحيح الخطأ"><i class="fas fa-trash-alt"></i></button></td>
+        </tr>
+    `).join('');
+    openModal('modal_vault_log');
+}
+function deleteVaultTx(id) {
+    if(confirm('متأكد إنك عاوز تمسح الحركة دي عشان تصلح الغلطة؟ 🗑️')) {
+        let vault = DB.getData(DB.keys.vault) || {balance: 0, transactions: []};
+        let tx = vault.transactions.find(t => t.id == id);
+        if(tx) {
+            vault.balance += (tx.type === 'in' ? -tx.amount : tx.amount);
+            vault.transactions = vault.transactions.filter(t => t.id != id);
+            DB.saveData(DB.keys.vault, vault);
+            renderFinance(); openVaultLog(); 
+        }
+    }
+}
+
+function delSupplier(id) { if(confirm('حذف المورد؟')) { const s = DB.getData(DB.keys.suppliers).filter(x=>x.id!==id); DB.saveData(DB.keys.suppliers, s); renderFinance(); updateSupplierDropdown(); } }
+function saveFixedCosts() { const fc = { rent: parseFloat(document.getElementById('fc_rent').value) || 0, salaries: parseFloat(document.getElementById('fc_salaries').value) || 0, utils: parseFloat(document.getElementById('fc_utils').value) || 0 }; DB.saveData(DB.keys.fixed_costs, fc); renderFinance(); alert('تم تحديث التحليل المالي.'); }
+function deleteArchiveRecord(index) {
+    if(confirm('تحذير: هتمسح تقفيل اليومية دي من الأرشيف نهائياً.. متأكد؟ ⚠️')) {
+        let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
+        archive.splice(index, 1);
+        localStorage.setItem('neo_archive_v1', JSON.stringify(archive));
+        try { database.ref('NeoCafe/neo_archive_v1').set(archive); } catch(e){}
+        renderFinance();
+    }
 }
 
 /* ================== الوصفات (Recipe المحمي) ================== */
@@ -1513,7 +1628,13 @@ function renderKitchen(){
 setInterval(() => { if(document.getElementById('kitchen').classList.contains('active')) renderKitchen(); }, 60000);
 function finishOrder(id){const k=DB.getData(DB.keys.kitchen),o=k.find(x=>x.id===id);if(o){o.status='done';DB.saveData(DB.keys.kitchen,k);renderKitchen();}}
 
-function renderDebts(){const d=DB.getData(DB.keys.debts).filter(x=>x.status==='unpaid'),t=document.getElementById('debtSearch').value.toLowerCase();document.getElementById('debtsTable').innerHTML=d.filter(x=>x.customer.toLowerCase().includes(t)).map(x=>`<tr><td>${x.customer}</td><td style="color:red;font-weight:bold;">${x.amount} ج</td><td>${new Date(x.date).toLocaleDateString()}</td><td style="font-size:12px;color:#7f8c8d;">${x.items.map(i=>i.name).join('، ')}</td><td><button class="btn-action" style="background:var(--success);padding:5px 10px;" onclick="payDebt(${x.id})">تسديد</button></td></tr>`).join('');const h=DB.getData(DB.keys.hospitality);document.getElementById('hospitalityTable').innerHTML=h.slice(-20).reverse().map(x=>`<tr><td>${x.reason}</td><td style="color:var(--secondary);font-weight:bold;">${x.cost.toFixed(1)} ج</td><td style="text-decoration:line-through;">${x.lostRevenue} ج</td><td style="font-size:12px;color:#7f8c8d;">${x.items.map(i=>i.name).join('، ')}</td><td>${new Date(x.date).toLocaleDateString()}</td></tr>`).join('');}
+function renderDebts(){
+    const d=DB.getData(DB.keys.debts).filter(x=>x.status==='unpaid'),t=document.getElementById('debtSearch').value.toLowerCase();
+    document.getElementById('debtsTable').innerHTML=d.filter(x=>x.customer.toLowerCase().includes(t)).map(x=>`<tr><td>${x.customer}</td><td style="color:red;font-weight:bold;">${x.amount} ج</td><td>${new Date(x.date).toLocaleDateString()}</td><td style="font-size:12px;color:#7f8c8d;">${x.items.map(i=>i.name).join('، ')}</td><td><button class="btn-action" style="background:var(--success);padding:5px 10px;" onclick="payDebt(${x.id})">تسديد</button></td></tr>`).join('');
+    const h=DB.getData(DB.keys.hospitality);
+    document.getElementById('hospitalityTable').innerHTML=h.slice(-20).reverse().map(x=>`<tr><td>${x.reason}</td><td style="color:var(--secondary);font-weight:bold;">${x.cost.toFixed(1)} ج</td><td style="text-decoration:line-through;">${x.lostRevenue} ج</td><td style="font-size:12px;color:#7f8c8d;">${x.items.map(i=>i.name).join('، ')}</td><td>${new Date(x.date).toLocaleDateString()}</td><td><button class="btn-action" style="background:#e74c3c;padding:5px 10px;" onclick="delHost(${x.id})"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+}
+function delHost(id){if(confirm('متأكد إنك عاوز تلغي الضيافة دي نهائياً؟')){const hs=DB.getData(DB.keys.hospitality).filter(x=>x.id!==id);DB.saveData(DB.keys.hospitality,hs);renderDebts();}}
 function payDebt(id){if(!confirm('هل تم استلام المبلغ نقداً وسيتم إضافته للخزنة؟'))return;const ds=DB.getData(DB.keys.debts),d=ds.find(x=>x.id===id);if(d){d.status='paid';const s=DB.getData(DB.keys.sales);s.push({id:Date.now(),date:new Date().toISOString(),items:[{name:`سداد دين: ${d.customer}`,price:d.amount,qty:1}],total:d.amount,cost:0,type:'debt_payment',method:'cash'});DB.saveData(DB.keys.sales,s);DB.saveData(DB.keys.debts,ds);renderDebts();alert('تم السداد بنجاح وإضافة المبلغ للخزنة ✅');}}
 
 // ================== نظام الولاء ==================
@@ -1522,75 +1643,20 @@ function triggerRedeemModal(phone) { closeModal(); const l = DB.getData(DB.keys.
 function executeRedeemPoints() { const phone = document.getElementById('loyalty_redeem_phone').value; let ptsToRedeem = parseInt(document.getElementById('loyalty_redeem_amount').value); const l = DB.getData(DB.keys.loyalty); let user = l.find(x => x.phone === phone); if(!ptsToRedeem || isNaN(ptsToRedeem) || ptsToRedeem <= 0) return alert('برجاء إدخال عدد نقاط صحيح!'); if(ptsToRedeem > user.points) return alert('النقاط المدخلة أكبر من رصيد العميل المتاح!'); user.points -= ptsToRedeem; DB.saveData(DB.keys.loyalty, l); renderLoyalty(); closeModal(); alert(`تم خصم ${ptsToRedeem} نقطة بنجاح! يمكنك الآن عمل أوردر للعميل وتطبيق خصم بقيمة ${ptsToRedeem} جنيه. 🎁`); }
 
 /* ================== الموظفين ================== */
-function renderStaff(){ const s=DB.getData(DB.keys.staff); document.getElementById('staffCards').innerHTML=s.map(x=>`<div style="min-width:180px;background:white;padding:15px;border:1px solid #ddd;border-radius:12px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,0.05);position:relative;"><button onclick="deleteStaff('${x.id}')" style="position:absolute;top:10px;left:10px;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;" title="حذف الموظف"><i class="fas fa-trash"></i></button><div style="font-size:40px;color:var(--primary);margin-bottom:10px;"><i class="fas fa-user-tie"></i></div><h3 style="margin:0 0 5px 0;">${x.name}</h3><p style="color:#7f8c8d;margin:0 0 10px 0;font-size:12px;">${x.job}</p><div style="font-weight:900;color:var(--text);margin-bottom:15px;background:var(--bg);padding:5px;border-radius:5px;">${x.salary} ج</div><button class="btn-action" onclick="openStaffAction('${x.id}','${x.name}')" style="width:100%">تسجيل حركة</button></div>`).join(''); const l=JSON.parse(localStorage.getItem('neo_staff_log'))||[]; document.querySelector('#staffLogTable tbody').innerHTML=l.slice(-15).reverse().map(x=>`<tr><td>${x.name}</td><td><span style="background:${x.type==='bonus'?'#dcfce7':(x.type==='salary'?'#e0e7ff':(x.type==='advance'?'#fef08a':'#fee2e2'))};color:${x.type==='bonus'?'green':(x.type==='salary'?'blue':(x.type==='advance'?'#ca8a04':'red'))};padding:2px 8px;border-radius:5px;font-size:12px;font-weight:bold;">${x.type==='bonus'?'مكافأة':(x.type==='salary'?'صرف راتب':(x.type==='advance'?'سلفة':(x.type==='absence'?'غياب':'خصم')))}</span></td><td style="font-weight:bold;">${x.amount} ج</td><td style="font-size:12px; color:#555;">${x.note || '-'}</td><td>${new Date(x.date).toLocaleDateString()}</td></tr>`).join(''); }
+function renderStaff(){ 
+    const s=DB.getData(DB.keys.staff); 
+    document.getElementById('staffCards').innerHTML=s.map(x=>`<div style="min-width:180px;background:white;padding:15px;border:1px solid #ddd;border-radius:12px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,0.05);position:relative;"><button onclick="deleteStaff('${x.id}')" style="position:absolute;top:10px;left:10px;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;" title="حذف الموظف"><i class="fas fa-trash"></i></button><div style="font-size:40px;color:var(--primary);margin-bottom:10px;"><i class="fas fa-user-tie"></i></div><h3 style="margin:0 0 5px 0;">${x.name}</h3><p style="color:#7f8c8d;margin:0 0 10px 0;font-size:12px;">${x.job}</p><div style="font-weight:900;color:var(--text);margin-bottom:15px;background:var(--bg);padding:5px;border-radius:5px;">${x.salary} ج</div><button class="btn-action" onclick="openStaffAction('${x.id}','${x.name}')" style="width:100%">تسجيل حركة</button></div>`).join(''); 
+    const l=JSON.parse(localStorage.getItem('neo_staff_log'))||[]; 
+    document.querySelector('#staffLogTable tbody').innerHTML=l.slice(-15).reverse().map(x=>`<tr><td>${x.name}</td><td><span style="background:${x.type==='bonus'?'#dcfce7':(x.type==='salary'?'#e0e7ff':(x.type==='advance'?'#fef08a':'#fee2e2'))};color:${x.type==='bonus'?'green':(x.type==='salary'?'blue':(x.type==='advance'?'#ca8a04':'red'))};padding:2px 8px;border-radius:5px;font-size:12px;font-weight:bold;">${x.type==='bonus'?'مكافأة':(x.type==='salary'?'صرف راتب':(x.type==='advance'?'سلفة':(x.type==='absence'?'غياب':'خصم')))}</span></td><td style="font-weight:bold;">${x.amount} ج</td><td style="font-size:12px; color:#555;">${x.note || '-'}</td><td>${new Date(x.date).toLocaleDateString()}</td><td><button class="btn-action" style="background:#e74c3c;padding:5px 10px;" onclick="delStaffLog(${x.id})"><i class="fas fa-trash"></i></button></td></tr>`).join(''); 
+}
+function delStaffLog(id){if(confirm('إلغاء هذه الحركة المالية من الموظف؟')){let l=JSON.parse(localStorage.getItem('neo_staff_log'))||[];l=l.filter(x=>x.id!==id);localStorage.setItem('neo_staff_log',JSON.stringify(l));try{database.ref('NeoCafe/neo_staff_log').set(l);}catch(e){}renderStaff();}}
 function deleteStaff(id){if(confirm('متأكد إنك عاوز تمسح الموظف ده من السيستم؟')){const s=DB.getData(DB.keys.staff).filter(x=>x.id!==id);DB.saveData(DB.keys.staff,s);renderStaff();}}
 function saveStaff(){const n=document.getElementById('staff_name').value,j=document.getElementById('staff_job').value,s=document.getElementById('staff_salary').value;if(n&&s){const st=DB.getData(DB.keys.staff);st.push({id:'s_'+Date.now(),name:n,job:j,salary:s});DB.saveData(DB.keys.staff,st);closeModal();renderStaff();}}
 function openStaffAction(id,n){document.getElementById('staff_action_id').value=id;document.getElementById('staff_action_title').textContent=`حركة لـ: ${n}`; document.getElementById('staff_action_amount').value=''; document.getElementById('staff_action_note').value=''; openModal('modal_staff_action');}
 function handleStaffActionChange() { const t = document.getElementById('staff_action_type').value; if (t === 'salary') { const id = document.getElementById('staff_action_id').value; const e = DB.getData(DB.keys.staff).find(x => x.id == id); if (e) document.getElementById('staff_action_amount').value = e.salary; } }
 function saveStaffAction(){ const id=document.getElementById('staff_action_id').value, t=document.getElementById('staff_action_type').value, a=parseFloat(document.getElementById('staff_action_amount').value), note=document.getElementById('staff_action_note').value, st=DB.getData(DB.keys.staff), e=st.find(x=>x.id==id); if(e&&a){ if(t==='advance'||t==='bonus'||t==='salary'){ let titleText = t==='advance'?'سلفة':(t==='salary'?'صرف راتب':'مكافأة'); const ex=DB.getData(DB.keys.exp); ex.push({id:Date.now(),date:new Date().toISOString(),category: "رواتب وموظفين", title:`${titleText} لـ: ${e.name} ${note?`(${note})`:''}`,amount:a}); DB.saveData(DB.keys.exp,ex); } const l=JSON.parse(localStorage.getItem('neo_staff_log'))||[]; l.push({id:Date.now(),name:e.name,type:t,amount:a,note:note,date:new Date().toISOString()}); localStorage.setItem('neo_staff_log',JSON.stringify(l)); try { database.ref('NeoCafe/neo_staff_log').set(l); } catch(err){} closeModal();renderStaff();alert('تم تسجيل الحركة بنجاح ✅'); } }
 
-function openCloseShiftModal(){ 
-    const s = DB.getData(DB.keys.sales); const e = DB.getData(DB.keys.exp); const targetDate = getBusinessDate(new Date()); 
-    const ts = s.filter(x => getBusinessDate(x.date) === targetDate); 
-    const te = e.filter(x => getBusinessDate(x.date) === targetDate).reduce((a,b)=>a+b.amount,0); 
-    const cs=ts.filter(x=>x.method==='cash').reduce((a,b)=>a+b.total,0),vs=ts.filter(x=>x.method==='vodafone').reduce((a,b)=>a+b.total,0),is=ts.filter(x=>x.method==='insta').reduce((a,b)=>a+b.total,0),vis=ts.filter(x=>x.method==='visa').reduce((a,b)=>a+b.total,0); 
-    const debtIncomes = ts.filter(x=>x.type==='debt_payment').reduce((a,b)=>a+b.total,0); 
-    
-    const todayTips = ts.reduce((a,b) => a + (b.tips || 0), 0);
-    
-    const html=`
-    <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>مبيعات كاش (أوردرات + تيبس):</span><b>${cs - debtIncomes} ج</b></div>
-    <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;color:var(--success);"><span>تسديد ديون (كاش):</span><b>+ ${debtIncomes} ج</b></div>
-    <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>فودافون كاش:</span><b>${vs} ج</b></div>
-    <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>انستا باي:</span><b>${is} ج</b></div>
-    <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #ccc;padding:5px;"><span>فيزا:</span><b>${vis} ج</b></div>
-    <div style="display:flex;justify-content:space-between;border-bottom:2px solid #000;padding:10px 0;font-size:18px;"><span>الإجمالي العام:</span><b>${(cs+vs+is+vis).toFixed(2)} ج</b></div>
-    
-    <div style="display:flex;justify-content:space-between;color:red;padding:5px;"><span>مصروفات مسحوبة (من الدرج):</span><b>- ${te} ج</b></div>
-    <div style="background:#f0fdf4;padding:10px;text-align:center;border:1px solid green;margin-top:10px;font-weight:bold;font-size:20px;color:var(--primary-dark);">الصافي النقدي بالدرج: ${(cs-te).toFixed(2)} ج</div>
-    <div style="text-align:center; font-size:12px; color:#555; margin-top:5px; font-weight:bold;">(تتضمن <span style="color:var(--success);">${todayTips} ج</span> تيبس للستاف)</div>
-    `; 
-    document.getElementById('shift_report_body').innerHTML=html;openModal('modal_close_shift'); 
-}
-function printShiftReport(){window.print();}
-
-/* ================== الموتور الإجباري لتقفيل اليومية (Z-Report) ================== */
-
-(function injectZReportModal() {
-    if(document.getElementById('modal_z_report')) return;
-    document.body.insertAdjacentHTML('beforeend', `
-    <div id="modal_z_report" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999999; justify-content:center; align-items:center; backdrop-filter: blur(3px);">
-        <div style="background:#fff; width:90%; max-width:400px; padding:30px 20px; border-radius:20px; text-align:center; box-shadow:0 15px 30px rgba(0,0,0,0.3);">
-            <div style="background:#fdf2f2; width:80px; height:80px; border-radius:50%; display:flex; justify-content:center; align-items:center; margin:0 auto 15px;">
-                <i class="fas fa-lock" style="font-size:35px; color:#e74c3c;"></i>
-            </div>
-            <h2 style="color:#e74c3c; margin-bottom:10px; font-weight:900; font-family:'Cairo', sans-serif;">تقفيل اليومية</h2>
-            <p style="font-weight:bold; margin-bottom:25px; color:#333; font-size:15px; font-family:'Cairo', sans-serif;">
-                هل أنت متأكد من تقفيل الوردية؟<br>
-                <span style="color:#7f8c8d; font-size:13px; font-weight:normal;">سيتم حفظ البيانات في الأرشيف وتصفير المبيعات الحالية.</span>
-            </p>
-            <div style="display:flex; gap:10px;">
-                <button onclick="executeZReport()" style="flex:1; background:var(--primary, #27ae60); color:#fff; border:none; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; font-family:'Cairo', sans-serif;"><i class="fas fa-check"></i> تأكيد وطباعة</button>
-                <button onclick="document.getElementById('modal_z_report').style.display='none'" style="flex:1; background:#95a5a6; color:#fff; border:none; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; font-family:'Cairo', sans-serif;"><i class="fas fa-times"></i> تراجع</button>
-            </div>
-        </div>
-    </div>
-    `);
-})();
-
-setTimeout(function() {
-    let allElements = document.querySelectorAll('.nav-btn, button, a, li');
-    allElements.forEach(el => {
-        if (el.innerText && el.innerText.includes('تقفيل اليومية')) {
-            el.onclick = null; 
-            el.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.getElementById('modal_z_report').style.display = 'flex';
-            });
-        }
-    });
-}, 1500);
-
+// ================== Z-Report & الطباعة ==================
 function executeZReport() {
     document.getElementById('modal_z_report').style.display = 'none'; 
 
@@ -1670,7 +1736,7 @@ function executeZReport() {
             </div>
             <script>
                 setTimeout(() => { window.print(); window.close(); }, 500);
-            </scr`+`ipt>
+            <\/script>
         </body>
         </html>
     `);
@@ -1678,10 +1744,10 @@ function executeZReport() {
     printWindow.focus();
 }
 
-/* ================== الموتور الشامل للملاحظات والطباعة والترقيم ================== */
+/* ================== الملاحظات والترقيم ================== */
 setTimeout(() => {
     let discountInputs = document.querySelectorAll('input[type="number"]');
-    let targetInput = Array.from(discountInputs).find(input => input.placeholder && input.placeholder.includes('خصم') || input.id && input.id.includes('cartTips'));
+    let targetInput = Array.from(discountInputs).find(input => input.id && input.id.includes('cartTips'));
     if(targetInput && !document.getElementById('orderNoteInput')) {
         let noteDiv = document.createElement('div');
         noteDiv.style.cssText = "display:flex; align-items:center; margin-top:10px; border-top:1px solid #ddd; padding-top:10px; width:100%;";
