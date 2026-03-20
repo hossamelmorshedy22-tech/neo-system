@@ -896,5 +896,32 @@ window.print = function() {
     }
     originalWindowPrint2.apply(this, arguments); if(noteInput) noteInput.value = ''; 
 };
+// --- كود حماية إيرادات الداشبورد ---
+window.isDashUnlocked = false; 
+
+function checkDashPin() { 
+    if(window.isDashUnlocked) { 
+        window.isDashUnlocked = false; 
+        updateDashboard(); 
+    } else { 
+        document.getElementById('dash_pin_input').value = ''; 
+        openModal('modal_dash_pin'); 
+    } 
+} 
+
+function verifyDashPin() { 
+    if(document.getElementById('dash_pin_input').value === '2013') { 
+        window.isDashUnlocked = true; 
+        closeModal(); 
+        updateDashboard(); 
+        // هيقفل لوحده تاني بعد 15 ثانية
+        setTimeout(() => { 
+            window.isDashUnlocked = false; 
+            updateDashboard(); 
+        }, 15000); 
+    } else {
+        alert('❌ الرقم السري غير صحيح!'); 
+    }
+}
 </script>
 </html>
