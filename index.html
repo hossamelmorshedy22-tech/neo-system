@@ -573,11 +573,11 @@ function processCheckout(type, print, custName = ""){
         if(phone && phone.trim() !== '') { const pts = Math.floor(total / 10); let loy = DB.getData(DB.keys.loyalty); let user = loy.find(x => x.phone === phone); if(user) { user.points += pts; user.name = cName; finalPoints = user.points; } else { loy.push({phone, name: cName, points: pts}); finalPoints = pts; } DB.saveData(DB.keys.loyalty, loy); }
 
         let profitWithoutTips = (sub-disc) - cost; 
-        let unsentItems = cart.filter(i => !i.kdsStatus);
         
-        if(['cash','vodafone','insta','visa'].includes(type)){ const s=DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:cart,subTotal:sub,discount:disc,tips:tips,total,cost,profit:profitWithoutTips,type:'sale',method:type}); DB.saveData(DB.keys.sales,s); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); } 
-        else if(type==='credit'){ const d=DB.getData(DB.keys.debts); d.push({id,date:now.toISOString(),customer:custName,items:cart,amount:total,status:'unpaid'}); DB.saveData(DB.keys.debts,d); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); try{renderDebts();}catch(e){} alert('تم ترحيل الأوردر للآجل ✅'); } 
-        else if(type==='hospitality'){ const h=DB.getData(DB.keys.hospitality); h.push({id,date:now.toISOString(),reason:custName,items:cart,cost,lostRevenue:total}); DB.saveData(DB.keys.hospitality,h); if(unsentItems.length > 0) sendToKitchen(id,tableName(currentTable),unsentItems,now.toISOString()); try{renderDebts();}catch(e){} alert('تم تسجيل الأوردر كضيافة ✅'); }
+        // تم إلغاء إرسال أي طلبات للمطبخ وقت الحساب نهائياً بناءً على طلبك
+        if(['cash','vodafone','insta','visa'].includes(type)){ const s=DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:cart,subTotal:sub,discount:disc,tips:tips,total,cost,profit:profitWithoutTips,type:'sale',method:type}); DB.saveData(DB.keys.sales,s); } 
+        else if(type==='credit'){ const d=DB.getData(DB.keys.debts); d.push({id,date:now.toISOString(),customer:custName,items:cart,amount:total,status:'unpaid'}); DB.saveData(DB.keys.debts,d); try{renderDebts();}catch(e){} alert('تم ترحيل الأوردر للآجل ✅'); } 
+        else if(type==='hospitality'){ const h=DB.getData(DB.keys.hospitality); h.push({id,date:now.toISOString(),reason:custName,items:cart,cost,lostRevenue:total}); DB.saveData(DB.keys.hospitality,h); try{renderDebts();}catch(e){} alert('تم تسجيل الأوردر كضيافة ✅'); }
 
         if(print && ['cash','vodafone','insta','visa'].includes(type)){
             document.getElementById('p_date').textContent=now.toLocaleDateString('ar-EG'); document.getElementById('p_time').textContent=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}); document.getElementById('p_id').textContent=id.toString().slice(-6); document.getElementById('p_table').textContent=tableName(currentTable);
