@@ -309,7 +309,37 @@
         <div id="menu_edit" class="page"><div class="data-panel"><div class="panel-title"><h2><i class="fas fa-edit"></i> إدارة المنيو والأسعار</h2></div><p style="font-size:12px; color:#7f8c8d; margin-bottom:15px;">أي تعديل هنا سيتم حفظه ورفعه تلقائياً ليظهر للزباين فوراً.</p><div style="display:flex; gap:15px; margin-bottom:20px;"><select id="editMenuCat" class="form-control" onchange="renderMenuEditor()"><option value="">-- اختر القسم للتعديل --</option></select><select id="editMenuSubCat" class="form-control" style="display:none;" onchange="renderMenuEditorItems()"></select></div><div id="menuEditorContainer"><p style="text-align:center; color:#7f8c8d;">اختر قسماً لعرض وتعديل الأصناف.</p></div></div></div>
         
         <div id="dashboard" class="page"><div class="dash-header"><h2 style="margin:0; color:var(--primary);">📊 التحليلات الذكية</h2><div class="date-filter"><select id="dashPeriod" class="form-control" style="width:120px; margin:0;" onchange="handleDashPeriodChange()"><option value="today">اليوم</option><option value="yesterday">أمس</option><option value="month">الشهر</option><option value="custom">مخصص...</option></select><input type="date" id="dashCustomDate" class="form-control" style="width:140px; margin:0; display:none;" onchange="updateDashboard()"><button class="btn-action" onclick="updateDashboard()"><i class="fas fa-sync"></i> تحديث</button></div></div><div class="ai-panel" id="aiInsightBox" style="background:white; padding:15px; border-radius:12px; margin-bottom:20px;"><i class="fas fa-sparkles ai-sparkle"></i><h2><i class="fas fa-robot"></i> المحلل الذكي (NEO AI)</h2><div id="aiAdviceContent">جاري تحليل البيانات...</div></div><div class="stat-cards"><div class="stat-card card-purple"><h3>النجم (الأكثر مبيعاً) ⭐</h3><div class="val" id="dash_star">-</div><i class="fas fa-star icon"></i></div><div class="stat-card card-blue"><h3>متوسط الفاتورة (Avg)</h3><div class="val" id="dash_avg">0 ج</div><i class="fas fa-chart-line icon"></i></div><div class="stat-card card-orange"><h3>عدد الأوردرات (Orders)</h3><div class="val" id="dash_orders">0</div><i class="fas fa-receipt icon"></i></div><div class="stat-card card-green"><h3>إجمالي المبيعات (Revenue)</h3><div class="val" id="dash_sales" style="cursor:pointer;" title="اضغط لعرض الإيراد" onclick="checkDashPin()">**** ج</div><i class="fas fa-money-bill-wave icon"></i></div> 
-        </div><div class="insights-grid"><div class="insight-panel"><h2>⏳ ساعات الذروة</h2><div class="chart-container"><canvas id="peakHoursCanvas"></canvas></div></div><div class="insight-panel"><h2>📂 مبيعات الأقسام</h2><div class="chart-container"><canvas id="catChartCanvas"></canvas></div></div></div><div class="data-panel" style="margin-top: 20px;"><h2><i class="fas fa-coins"></i> تحليل ربحية الأصناف (هامش الربح)</h2><table><thead><tr><th>الصنف</th><th>الكمية</th><th>سعر البيع</th><th>التكلفة</th><th>الربح (للقطعة)</th><th>إجمالي المكسب</th></tr></thead><tbody id="profitItemsTable"></tbody></table></div></div>
+        </div><div class="insights-grid"><div class="insight-panel"><h2>⏳ ساعات الذروة</h2><div class="chart-container"><canvas id="peakHoursCanvas"></canvas></div></div><div class="insight-panel"><h2>📂 مبيعات الأقسام</h2><div class="chart-container"><canvas id="catChartCanvas"></canvas></div></div></div>
+        <div class="data-panel" style="margin-top: 20px;">
+                <div class="panel-title"><h2><i class="fas fa-search-plus"></i> استعلام تفصيلي عن منتج</h2></div>
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+                    <input type="text" id="itemAnalyticsSearch" class="form-control" placeholder="اكتب اسم المنتج (مثال: قهوة تركي)..." style="flex:2; margin:0;">
+                    <input type="date" id="itemAnStart" class="form-control" style="flex:1; margin:0;" title="من تاريخ">
+                    <input type="date" id="itemAnEnd" class="form-control" style="flex:1; margin:0;" title="إلى تاريخ">
+                    <button class="btn-action" onclick="analyzeItem()" style="background:var(--ai-color);"><i class="fas fa-search"></i> بحث وتحليل</button>
+                </div>
+                <div id="itemAnalyticsResult" style="display:none; background:#f8f9fa; padding:15px; border-radius:10px; border:1px dashed #ccc;">
+                    <h3 id="ia_name" style="color:var(--primary); margin-bottom:15px; text-align:center; font-weight:900;">اسم المنتج</h3>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:15px; text-align:center;">
+                        <div style="background:white; padding:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border-bottom:3px solid var(--success);">
+                            <i class="fas fa-shopping-cart" style="font-size:24px; color:var(--success); margin-bottom:10px;"></i>
+                            <div style="font-size:12px; color:#777; font-weight:bold;">الكمية المباعة</div>
+                            <div id="ia_qty" style="font-size:20px; font-weight:900;">0</div>
+                        </div>
+                        <div style="background:white; padding:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border-bottom:3px solid var(--secondary);">
+                            <i class="fas fa-calendar-check" style="font-size:24px; color:var(--secondary); margin-bottom:10px;"></i>
+                            <div style="font-size:12px; color:#777; font-weight:bold;">أكثر يوم انطلب فيه</div>
+                            <div id="ia_day" style="font-size:16px; font-weight:900;">-</div>
+                        </div>
+                        <div style="background:white; padding:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border-bottom:3px solid var(--ai-color);">
+                            <i class="fas fa-clock" style="font-size:24px; color:var(--ai-color); margin-bottom:10px;"></i>
+                            <div style="font-size:12px; color:#777; font-weight:bold;">ساعة الذروة للمنتج</div>
+                            <div id="ia_hour" style="font-size:20px; font-weight:900;">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <div class="data-panel" style="margin-top: 20px;"><h2><i class="fas fa-coins"></i> تحليل ربحية الأصناف (هامش الربح)</h2><table><thead><tr><th>الصنف</th><th>الكمية</th><th>سعر البيع</th><th>التكلفة</th><th>الربح (للقطعة)</th><th>إجمالي المكسب</th></tr></thead><tbody id="profitItemsTable"></tbody></table></div></div>
         <div id="inventory" class="page"><div class="data-panel" style="background: transparent; box-shadow: none; padding: 0;"><div class="panel-title" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);"><div style="display:flex; align-items:center; gap:10px;"><h2><i class="fas fa-boxes"></i> إدارة المخزون <span id="invAlertText" style="color:var(--danger); font-size:14px; font-weight:bold; display:none;">(نواقص!)</span></h2><button id="btnWhatsappAlert" class="btn-action" style="background:var(--whatsapp); display:none; padding:5px 10px; font-size:12px;" onclick="openWhatsAppModal('alert')"><i class="fab fa-whatsapp"></i> إرسال للإدارة</button></div><div style="display:flex; gap:10px;"><input type="text" id="invSearch" placeholder="بحث..." class="form-control" style="margin:0; width: 200px;" onkeyup="renderInventory()"><button class="btn-action" onclick="openModal('modal_inv')"><i class="fas fa-plus"></i> إضافة صنف</button></div></div><div id="inventoryGroupedContainer"></div></div></div>
         
         <div id="finance" class="page"><div class="finance-grid"><div class="vault-card"><i class="fas fa-vault" style="font-size: 60px; position: absolute; right: -10px; bottom: -10px; opacity: 0.1;"></i><h2>الخزنة الرئيسية <button onclick="openVaultLog()" style="background:none; border:none; color:var(--gold-light); font-size:18px; cursor:pointer;" title="سجل الحركات"><i class="fas fa-history"></i></button></h2><div class="vault-amount" id="vaultTotalBalance" style="cursor:pointer;" title="اضغط لعرض الرصيد" onclick="checkVaultPin()">0.00 ج</div><div class="vault-actions"><button class="vault-btn" onclick="openGenericModal('vault_in')" style="color:var(--success); background:#fff;"><i class="fas fa-arrow-down"></i> إيداع</button><button class="vault-btn" onclick="openGenericModal('vault_out')" style="color:var(--danger); background:#fff;"><i class="fas fa-arrow-up"></i> سحب</button></div></div><div><div class="break-even-card"><h2 style="color:var(--primary); margin-top:0; border-bottom:2px solid var(--bg); padding-bottom:10px;"><i class="fas fa-chart-line"></i> تحليل التعادل</h2><div style="display:flex; gap:10px; margin-bottom:10px;"><div style="flex:1;"><label style="font-size:12px;font-weight:bold;">إيجار</label><input type="number" id="fc_rent" class="form-control" style="margin-bottom:0;" value="0"></div><div style="flex:1;"><label style="font-size:12px;font-weight:bold;">رواتب</label><input type="number" id="fc_salaries" class="form-control" style="margin-bottom:0;" value="0"></div><div style="flex:1;"><label style="font-size:12px;font-weight:bold;">مرافق</label><input type="number" id="fc_utils" class="form-control" style="margin-bottom:0;" value="0"></div></div><button class="btn-action" style="width:100%; margin-bottom:15px;" onclick="saveFixedCosts()">حفظ وتحديث <i class="fas fa-sync"></i></button><div class="target-box" id="breakEvenResult"></div></div><div class="break-even-card" style="margin-top: 15px; text-align: center; border-color: var(--success); background: #f0fdf4;"><h2 style="color:var(--success); margin-top:0; border-bottom:2px dashed var(--success); padding-bottom:10px;"><i class="fas fa-hand-holding-usd"></i> حصالة التيبس (هذا الشهر)</h2><div id="financeTotalTips" style="font-size: 35px; font-weight: 900; color: var(--success); margin: 15px 0;">0.00 ج</div><p style="font-size:12px; color:#166534; font-weight:bold; margin-bottom:0;">محفوظ للستاف بعيداً عن مبيعات الكافيه.</p></div></div></div><div class="data-panel" style="margin-top: 20px;"><div class="panel-title"><h2><i class="fas fa-truck"></i> أجندة الموردين</h2><button class="btn-action" onclick="openModal('modal_custom_supplier')"><i class="fas fa-plus"></i> إضافة مورد</button></div><table><thead><tr><th>اسم المورد</th><th>التليفون</th><th>بيورد إيه؟</th><th>إجراء</th></tr></thead><tbody id="suppliersTableBody"></tbody></table></div><div class="data-panel" style="margin-top: 20px;"><div class="panel-title"><h2><i class="fas fa-history"></i> سجل اليوميات (أرشيف الكاشير)</h2></div><table><thead><tr><th>التاريخ</th><th>المبيعات</th><th>المصروفات</th><th>الصافي</th><th>إجراء</th></tr></thead><tbody id="dailyLogTableBody"></tbody></table></div></div>
@@ -671,13 +701,33 @@ function generateAIAdvice(rev, ords, avg, sortedItems) {
     aiBox.innerHTML = advice.join('');
 }
 function drawCharts(catsData, topItems, hourlyData) {
-    if (typeof Chart === 'undefined') return; 
-    const catCtx = document.getElementById('catChartCanvas'); const peakCtx = document.getElementById('peakHoursCanvas');
-    if(!catCtx || !peakCtx) return;
-    if(catChartInstance) catChartInstance.destroy(); if(peakChartInstance) peakChartInstance.destroy();
-    catChartInstance = new Chart(catCtx, { type: 'doughnut', data: { labels: Object.keys(catsData), datasets: [{ data: Object.values(catsData), backgroundColor: ['#124d33', '#d4af37', '#e74c3c', '#3498db', '#9b59b6', '#f39c12'], borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
-    const hoursLabels = Object.keys(hourlyData).map(h => `${h}:00`); const hoursValues = Object.values(hourlyData);
-    peakChartInstance = new Chart(peakCtx, { type: 'line', data: { labels: hoursLabels, datasets: [{ label: 'عدد الأوردرات', data: hoursValues, borderColor: '#8e44ad', backgroundColor: 'rgba(142, 68, 173, 0.2)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } });
+    setTimeout(() => {
+        if (typeof Chart === 'undefined') return; 
+        const catCtx = document.getElementById('catChartCanvas'); const peakCtx = document.getElementById('peakHoursCanvas');
+        if(!catCtx || !peakCtx) return;
+        if(catChartInstance) catChartInstance.destroy(); if(peakChartInstance) peakChartInstance.destroy();
+        catChartInstance = new Chart(catCtx, { type: 'doughnut', data: { labels: Object.keys(catsData), datasets: [{ data: Object.values(catsData), backgroundColor: ['#124d33', '#d4af37', '#e74c3c', '#3498db', '#9b59b6', '#f39c12'], borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        const hoursLabels = Object.keys(hourlyData).map(h => { let hr = parseInt(h); let ampm = hr >= 12 ? 'م' : 'ص'; let disp = hr % 12 || 12; return `${disp} ${ampm}`; }); const hoursValues = Object.values(hourlyData);
+        peakChartInstance = new Chart(peakCtx, { type: 'line', data: { labels: hoursLabels, datasets: [{ label: 'عدد الطلبات', data: hoursValues, borderColor: '#8e44ad', backgroundColor: 'rgba(142, 68, 173, 0.2)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } });
+    }, 300); // تأخير بسيط عشان الشاشة تكون فتحت والرسومات متضربش
+}
+
+// دالة تأمين وتشغيل أرشيف اليوميات
+function renderArchive() {
+    let archive = JSON.parse(localStorage.getItem('neo_archive_v1')) || [];
+    let tbody = document.getElementById('dailyLogTableBody');
+    if(!tbody) return;
+    if(archive.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#999;">لا توجد يوميات مقفلة في الأرشيف</td></tr>'; return; }
+    tbody.innerHTML = archive.slice(-15).reverse().map((day, index) => {
+        let ts = safeNum(day.totalSales); let te = safeNum(day.totalExpenses); let nc = safeNum(day.netCash);
+        return `<tr style="text-align:center; border-bottom:1px solid #eee;">
+            <td style="padding:10px; font-size:13px; font-weight:bold;">${day.date || 'غير محدد'}</td>
+            <td style="color:#27ae60; font-weight:900;">${ts.toLocaleString()} ج</td>
+            <td style="color:#e74c3c; font-weight:900;">${te.toLocaleString()} ج</td>
+            <td style="font-weight:900; color:var(--primary-dark);">${nc.toLocaleString()} ج</td>
+            <td><button class="btn-action" onclick="deleteArchiveRecord(${archive.length - 1 - index})" style="background:#e74c3c; padding:5px 10px;"><i class="fas fa-trash"></i></button></td>
+        </tr>`;
+    }).join('');
 }
 
 /* ================== المخزن والتكاليف ================== */
@@ -746,6 +796,7 @@ function renderFinance() {
         vaultDiv.style.cursor = 'pointer'; vaultDiv.onclick = checkVaultPin;
         if(!window.isVaultUnlocked) { vaultDiv.innerHTML = '<i class="fas fa-lock" style="color:#7f8c8d; font-size:24px;"></i> <span style="letter-spacing:5px;">****</span> ج'; } 
         else { vaultDiv.innerHTML = '<i class="fas fa-unlock" style="color:#27ae60; font-size:24px;"></i> ' + window.currentVaultBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ج'; }
+    renderArchive();
     }
 
     const fc = DB.getData(DB.keys.fixed_costs);
@@ -919,6 +970,67 @@ function verifyDashPin() {
     } else {
         alert('❌ الرقم السري غير صحيح!'); 
     }
+}
+
+function analyzeItem() {
+    const term = document.getElementById('itemAnalyticsSearch').value.toLowerCase().trim();
+    const sDate = document.getElementById('itemAnStart').value;
+    const eDate = document.getElementById('itemAnEnd').value;
+
+    if(!term) return alert('يا بوب اكتب اسم المنتج الأول عشان أبحثلك عنه!');
+    
+    const sales = DB.getData(DB.keys.sales).filter(x => x.type !== 'debt_payment');
+    
+    let filteredSales = sales;
+    if(sDate && eDate) {
+        filteredSales = sales.filter(x => {
+            try { const d = getBusinessDate(x.date); return d >= sDate && d <= eDate; } catch(e) { return false; }
+        });
+    }
+
+    let totalQty = 0; let daysCount = {}; let hoursCount = {};
+
+    filteredSales.forEach(sale => {
+        sale.items.forEach(item => {
+            let cleanName = item.name.split(' (')[0].toLowerCase();
+            if(cleanName.includes(term) || item.name.toLowerCase().includes(term)) {
+                let q = safeNum(item.qty);
+                totalQty += q;
+                
+                try {
+                    let saleDate = new Date(sale.date);
+                    // تجميع الأيام
+                    let dayString = saleDate.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+                    if(!daysCount[dayString]) daysCount[dayString] = 0;
+                    daysCount[dayString] += q;
+
+                    // تجميع الساعات
+                    let hour = saleDate.getHours();
+                    let ampm = hour >= 12 ? 'مساءً' : 'صباحاً';
+                    let displayHour = hour % 12 || 12;
+                    let hourString = `${displayHour} ${ampm}`;
+                    if(!hoursCount[hourString]) hoursCount[hourString] = 0;
+                    hoursCount[hourString] += q;
+                } catch(e) {}
+            }
+        });
+    });
+
+    if(totalQty === 0) {
+        alert('المنتج ده متباعش خالص في الفترة دي يا ريس!');
+        document.getElementById('itemAnalyticsResult').style.display = 'none';
+        return;
+    }
+
+    let bestDay = Object.keys(daysCount).reduce((a, b) => daysCount[a] > daysCount[b] ? a : b);
+    let bestHour = Object.keys(hoursCount).reduce((a, b) => hoursCount[a] > hoursCount[b] ? a : b);
+
+    document.getElementById('ia_name').innerText = `نتائج تحليل: ${term}`;
+    document.getElementById('ia_qty').innerText = totalQty;
+    document.getElementById('ia_day').innerText = bestDay;
+    document.getElementById('ia_hour').innerText = bestHour;
+    
+    document.getElementById('itemAnalyticsResult').style.display = 'block';
 }
 </script>
 </html>
