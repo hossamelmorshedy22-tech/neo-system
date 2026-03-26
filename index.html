@@ -625,8 +625,7 @@ function processSplitCheckout(method) {
         
         let s = DB.getData(DB.keys.sales); s.push({id,date:now.toISOString(),items:itemsToPay,subTotal:subTotal,discount:0,tips:0,total:subTotal,cost,profit:subTotal-cost,type:'sale',method:method}); DB.saveData(DB.keys.sales, s);
         
-        let unsentSplit = itemsToPay.filter(i => !i.kdsStatus); 
-        if(unsentSplit.length > 0) sendToKitchen(id, tableName(currentTable) + " (منفصل)", unsentSplit, now.toISOString());
+        // تم إلغاء إرسال الطلبات وقت تقسيم الفاتورة للمطبخ
         
         splitSelection.forEach((item, idx) => { if(item.selectedQty > 0) { tablesOrder[currentTable][idx].qty -= item.selectedQty; } });
         tablesOrder[currentTable] = tablesOrder[currentTable].filter(i => i.qty > 0); if(tablesOrder[currentTable].length === 0) { delete tablesMeta[currentTable]; saveTablesMeta(); }
@@ -673,11 +672,10 @@ function generateAIAdvice(rev, ords, avg, sortedItems) {
 }
 function drawCharts(catsData, topItems, hourlyData) {
     if (typeof Chart === 'undefined') return; 
-    const catCtx = document.getElementById('catChartCanvas'); const itemCtx = document.getElementById('itemsChartCanvas'); const peakCtx = document.getElementById('peakHoursCanvas');
-    if(!catCtx || !itemCtx || !peakCtx) return;
-    if(catChartInstance) catChartInstance.destroy(); if(itemsChartInstance) itemsChartInstance.destroy(); if(peakChartInstance) peakChartInstance.destroy();
-    catChartInstance = new Chart(catCtx, { type: 'doughnut', data: { labels: Object.keys(catsData), datasets: [{ data: Object.values(catsData), backgroundColor: ['#124d33', '#d4af37', '#e74c3c', '#3498db', '#9b59b6', '#f39c12'], borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false } });
-    itemsChartInstance = new Chart(itemCtx, { type: 'bar', data: { labels: topItems.map(x => x[0]), datasets: [{ label: 'الكمية المباعة', data: topItems.map(x => x[1].qty), backgroundColor: '#d4af37', borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false } });
+    const catCtx = document.getElementById('catChartCanvas'); const peakCtx = document.getElementById('peakHoursCanvas');
+    if(!catCtx || !peakCtx) return;
+    if(catChartInstance) catChartInstance.destroy(); if(peakChartInstance) peakChartInstance.destroy();
+    catChartInstance = new Chart(catCtx, { type: 'doughnut', data: { labels: Object.keys(catsData), datasets: [{ data: Object.values(catsData), backgroundColor: ['#124d33', '#d4af37', '#e74c3c', '#3498db', '#9b59b6', '#f39c12'], borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
     const hoursLabels = Object.keys(hourlyData).map(h => `${h}:00`); const hoursValues = Object.values(hourlyData);
     peakChartInstance = new Chart(peakCtx, { type: 'line', data: { labels: hoursLabels, datasets: [{ label: 'عدد الأوردرات', data: hoursValues, borderColor: '#8e44ad', backgroundColor: 'rgba(142, 68, 173, 0.2)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } });
 }
